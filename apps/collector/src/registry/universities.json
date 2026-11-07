@@ -1,0 +1,1837 @@
+{
+  "source": {
+    "name": "전국대학및전문대학정보표준데이터 (한국대학교육협의회)",
+    "url": "https://www.data.go.kr/data/15107736/standard.do",
+    "basedOn": "2026-03-18",
+    "fetchedAt": "2026-11-07"
+  },
+  "universities": [
+    {
+      "id": "kaya",
+      "name": "가야대학교(김해)",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상남도",
+      "homepage": "https://www.kaya.ac.kr"
+    },
+    {
+      "id": "gachon",
+      "name": "가천대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.gachon.ac.kr"
+    },
+    {
+      "id": "cku",
+      "name": "가톨릭관동대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.cku.ac.kr"
+    },
+    {
+      "id": "kkot",
+      "name": "가톨릭꽃동네대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.kkot.ac.kr"
+    },
+    {
+      "id": "catholic",
+      "name": "가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.catholic.ac.kr"
+    },
+    {
+      "id": "mtu",
+      "name": "감리교신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.mtu.ac.kr"
+    },
+    {
+      "id": "kangnam",
+      "name": "강남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.kangnam.ac.kr"
+    },
+    {
+      "id": "gangseo",
+      "name": "강서대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://gangseo.ac.kr"
+    },
+    {
+      "id": "kangwon",
+      "name": "강원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.kangwon.ac.kr"
+    },
+    {
+      "id": "konkuk",
+      "name": "건국대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.konkuk.ac.kr"
+    },
+    {
+      "id": "kku",
+      "name": "건국대학교(글로컬)",
+      "kind": "대학교",
+      "branch": "분교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.kku.ac.kr"
+    },
+    {
+      "id": "konyang",
+      "name": "건양대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.konyang.ac.kr"
+    },
+    {
+      "id": "kyonggi",
+      "name": "경기대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.kyonggi.ac.kr"
+    },
+    {
+      "id": "gntech",
+      "name": "경남과학기술대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경상남도",
+      "homepage": "https://www.gntech.ac.kr"
+    },
+    {
+      "id": "kyungnam",
+      "name": "경남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상남도",
+      "homepage": "https://www.kyungnam.ac.kr"
+    },
+    {
+      "id": "kduniv",
+      "name": "경동대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.kduniv.ac.kr"
+    },
+    {
+      "id": "knu",
+      "name": "경북대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "대구광역시",
+      "homepage": "https://www.knu.ac.kr"
+    },
+    {
+      "id": "gnu",
+      "name": "경상국립대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경상남도",
+      "homepage": "https://www.gnu.ac.kr"
+    },
+    {
+      "id": "ks",
+      "name": "경성대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.ks.ac.kr"
+    },
+    {
+      "id": "ikw",
+      "name": "경운대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.ikw.ac.kr"
+    },
+    {
+      "id": "ginue",
+      "name": "경인교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "인천광역시",
+      "homepage": "https://www.ginue.ac.kr"
+    },
+    {
+      "id": "kiu",
+      "name": "경일대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.kiu.ac.kr"
+    },
+    {
+      "id": "khu",
+      "name": "경희대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.khu.ac.kr"
+    },
+    {
+      "id": "kmu",
+      "name": "계명대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대구광역시",
+      "homepage": "https://www.kmu.ac.kr"
+    },
+    {
+      "id": "korea",
+      "name": "고려대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.korea.ac.kr"
+    },
+    {
+      "id": "korea-sejong",
+      "name": "고려대학교(세종)",
+      "kind": "대학교",
+      "branch": "분교",
+      "founding": "사립",
+      "region": "세종특별자치시",
+      "homepage": "https://sejong.korea.ac.kr"
+    },
+    {
+      "id": "kosin",
+      "name": "고신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.kosin.ac.kr"
+    },
+    {
+      "id": "gjue",
+      "name": "공주교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "충청남도",
+      "homepage": "https://www.gjue.ac.kr"
+    },
+    {
+      "id": "kwangshin",
+      "name": "광신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.kwangshin.ac.kr"
+    },
+    {
+      "id": "kw",
+      "name": "광운대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.kw.ac.kr"
+    },
+    {
+      "id": "gjc",
+      "name": "광주가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전라남도",
+      "homepage": "https://www.gjc.ac.kr"
+    },
+    {
+      "id": "gist",
+      "name": "광주과학기술원",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "특별법법",
+      "region": "광주광역시",
+      "homepage": "https://www.gist.ac.kr"
+    },
+    {
+      "id": "gnue",
+      "name": "광주교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "광주광역시",
+      "homepage": "https://www.gnue.ac.kr"
+    },
+    {
+      "id": "gwangju",
+      "name": "광주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.gwangju.ac.kr"
+    },
+    {
+      "id": "kwu",
+      "name": "광주여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.kwu.ac.kr"
+    },
+    {
+      "id": "gwnu",
+      "name": "국립강릉원주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.gwnu.ac.kr"
+    },
+    {
+      "id": "andong",
+      "name": "국립경국대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경상북도",
+      "homepage": "https://www.andong.ac.kr"
+    },
+    {
+      "id": "kongju",
+      "name": "국립공주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "충청남도",
+      "homepage": "https://www.kongju.ac.kr"
+    },
+    {
+      "id": "kunsan",
+      "name": "국립군산대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.kunsan.ac.kr"
+    },
+    {
+      "id": "kumoh",
+      "name": "국립금오공과대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경상북도",
+      "homepage": "https://www.kumoh.ac.kr"
+    },
+    {
+      "id": "mokpo",
+      "name": "국립목포대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "전라남도",
+      "homepage": "https://www.mokpo.ac.kr"
+    },
+    {
+      "id": "mmu",
+      "name": "국립목포해양대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "전라남도",
+      "homepage": "https://www.mmu.ac.kr"
+    },
+    {
+      "id": "pknu",
+      "name": "국립부경대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "부산광역시",
+      "homepage": "https://www.pknu.ac.kr"
+    },
+    {
+      "id": "scnu",
+      "name": "국립순천대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "전라남도",
+      "homepage": "https://www.scnu.ac.kr"
+    },
+    {
+      "id": "changwon",
+      "name": "국립창원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경상남도",
+      "homepage": "https://www.changwon.ac.kr"
+    },
+    {
+      "id": "ut",
+      "name": "국립한국교통대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "충청북도",
+      "homepage": "https://www.ut.ac.kr"
+    },
+    {
+      "id": "kmou",
+      "name": "국립한국해양대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "부산광역시",
+      "homepage": "https://www.kmou.ac.kr"
+    },
+    {
+      "id": "hanbat",
+      "name": "국립한밭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "대전광역시",
+      "homepage": "https://www.hanbat.ac.kr"
+    },
+    {
+      "id": "kookmin",
+      "name": "국민대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.kookmin.ac.kr"
+    },
+    {
+      "id": "kdu",
+      "name": "극동대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.kdu.ac.kr"
+    },
+    {
+      "id": "ggu",
+      "name": "금강대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.ggu.ac.kr"
+    },
+    {
+      "id": "gimcheon",
+      "name": "김천대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.gimcheon.ac.kr"
+    },
+    {
+      "id": "kornu",
+      "name": "나사렛대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.kornu.ac.kr"
+    },
+    {
+      "id": "nambu",
+      "name": "남부대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.nambu.ac.kr"
+    },
+    {
+      "id": "nsu",
+      "name": "남서울대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.nsu.ac.kr"
+    },
+    {
+      "id": "dankook",
+      "name": "단국대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.dankook.ac.kr"
+    },
+    {
+      "id": "cu",
+      "name": "대구가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.cu.ac.kr"
+    },
+    {
+      "id": "dgist",
+      "name": "대구경북과학기술원",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "특별법법",
+      "region": "대구광역시",
+      "homepage": "https://www.dgist.ac.kr"
+    },
+    {
+      "id": "dnue",
+      "name": "대구교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "대구광역시",
+      "homepage": "https://www.dnue.ac.kr"
+    },
+    {
+      "id": "daegu",
+      "name": "대구대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.daegu.ac.kr"
+    },
+    {
+      "id": "dgau",
+      "name": "대구예술대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.dgau.ac.kr"
+    },
+    {
+      "id": "dhu",
+      "name": "대구한의대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.dhu.ac.kr"
+    },
+    {
+      "id": "daeshin",
+      "name": "대신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.daeshin.ac.kr"
+    },
+    {
+      "id": "dcatholic",
+      "name": "대전가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "세종특별자치시",
+      "homepage": "https://www.dcatholic.ac.kr"
+    },
+    {
+      "id": "dju",
+      "name": "대전대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.dju.ac.kr"
+    },
+    {
+      "id": "daejeon",
+      "name": "대전신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.daejeon.ac.kr"
+    },
+    {
+      "id": "daejin",
+      "name": "대진대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.daejin.ac.kr"
+    },
+    {
+      "id": "duksung",
+      "name": "덕성여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.duksung.ac.kr"
+    },
+    {
+      "id": "dongguk",
+      "name": "동국대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.dongguk.edu"
+    },
+    {
+      "id": "dongguk-wise",
+      "name": "동국대학교(WISE)",
+      "kind": "대학교",
+      "branch": "분교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://wise.dongguk.ac.kr"
+    },
+    {
+      "id": "dongduk",
+      "name": "동덕여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.dongduk.ac.kr"
+    },
+    {
+      "id": "tu",
+      "name": "동명대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.tu.ac.kr"
+    },
+    {
+      "id": "dongseo",
+      "name": "동서대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.dongseo.ac.kr"
+    },
+    {
+      "id": "dsu",
+      "name": "동신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전라남도",
+      "homepage": "https://www.dsu.ac.kr"
+    },
+    {
+      "id": "donga",
+      "name": "동아대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.donga.ac.kr"
+    },
+    {
+      "id": "dyu",
+      "name": "동양대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.dyu.ac.kr"
+    },
+    {
+      "id": "deu",
+      "name": "동의대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.deu.ac.kr"
+    },
+    {
+      "id": "ltu",
+      "name": "루터대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.ltu.ac.kr"
+    },
+    {
+      "id": "mju",
+      "name": "명지대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.mju.ac.kr"
+    },
+    {
+      "id": "mokwon",
+      "name": "목원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.mokwon.ac.kr"
+    },
+    {
+      "id": "mcu",
+      "name": "목포가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전라남도",
+      "homepage": "https://www.mcu.ac.kr"
+    },
+    {
+      "id": "pcu",
+      "name": "배재대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.pcu.ac.kr"
+    },
+    {
+      "id": "bu",
+      "name": "백석대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.bu.ac.kr"
+    },
+    {
+      "id": "cup",
+      "name": "부산가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.cup.ac.kr"
+    },
+    {
+      "id": "bnue",
+      "name": "부산교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "부산광역시",
+      "homepage": "https://www.bnue.ac.kr"
+    },
+    {
+      "id": "pusan",
+      "name": "부산대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "부산광역시",
+      "homepage": "https://www.pusan.ac.kr"
+    },
+    {
+      "id": "bufs",
+      "name": "부산외국어대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.bufs.ac.kr"
+    },
+    {
+      "id": "bpu",
+      "name": "부산장신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상남도",
+      "homepage": "https://www.bpu.ac.kr"
+    },
+    {
+      "id": "syu",
+      "name": "삼육대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.syu.ac.kr"
+    },
+    {
+      "id": "smu",
+      "name": "상명대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.smu.ac.kr"
+    },
+    {
+      "id": "sangji",
+      "name": "상지대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.sangji.ac.kr"
+    },
+    {
+      "id": "sogang",
+      "name": "서강대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.sogang.ac.kr"
+    },
+    {
+      "id": "skuniv",
+      "name": "서경대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.skuniv.ac.kr"
+    },
+    {
+      "id": "seonam",
+      "name": "서남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.seonam.ac.kr"
+    },
+    {
+      "id": "seoultech",
+      "name": "서울과학기술대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "서울특별시",
+      "homepage": "https://www.seoultech.ac.kr"
+    },
+    {
+      "id": "snue",
+      "name": "서울교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "서울특별시",
+      "homepage": "https://www.snue.ac.kr"
+    },
+    {
+      "id": "scu",
+      "name": "서울기독대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.scu.ac.kr"
+    },
+    {
+      "id": "snu",
+      "name": "서울대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립대법",
+      "region": "서울특별시",
+      "homepage": "https://www.snu.ac.kr"
+    },
+    {
+      "id": "uos",
+      "name": "서울시립대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "공립",
+      "region": "서울특별시",
+      "homepage": "https://www.uos.ac.kr"
+    },
+    {
+      "id": "stu",
+      "name": "서울신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.stu.ac.kr"
+    },
+    {
+      "id": "swu",
+      "name": "서울여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.swu.ac.kr"
+    },
+    {
+      "id": "sjs",
+      "name": "서울장신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.sjs.ac.kr"
+    },
+    {
+      "id": "shyu",
+      "name": "서울한영대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://shyu.ac.kr"
+    },
+    {
+      "id": "seowon",
+      "name": "서원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.seowon.ac.kr"
+    },
+    {
+      "id": "sunmoon",
+      "name": "선문대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.sunmoon.ac.kr"
+    },
+    {
+      "id": "sungkyul",
+      "name": "성결대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.sungkyul.ac.kr"
+    },
+    {
+      "id": "skhu",
+      "name": "성공회대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.skhu.ac.kr"
+    },
+    {
+      "id": "skku",
+      "name": "성균관대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.skku.edu"
+    },
+    {
+      "id": "sungshin",
+      "name": "성신여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.sungshin.ac.kr"
+    },
+    {
+      "id": "semyung",
+      "name": "세명대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.semyung.ac.kr"
+    },
+    {
+      "id": "sejong",
+      "name": "세종대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.sejong.ac.kr"
+    },
+    {
+      "id": "sehan",
+      "name": "세한대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전라남도",
+      "homepage": "https://www.sehan.ac.kr"
+    },
+    {
+      "id": "songwon",
+      "name": "송원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.songwon.ac.kr"
+    },
+    {
+      "id": "suwoncatholic",
+      "name": "수원가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.suwoncatholic.ac.kr"
+    },
+    {
+      "id": "suwon",
+      "name": "수원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.suwon.ac.kr"
+    },
+    {
+      "id": "sookmyung",
+      "name": "숙명여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.sookmyung.ac.kr"
+    },
+    {
+      "id": "sch",
+      "name": "순천향대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.sch.ac.kr"
+    },
+    {
+      "id": "ssu",
+      "name": "숭실대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.ssu.ac.kr"
+    },
+    {
+      "id": "sgu",
+      "name": "신경주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://sgu.ac.kr"
+    },
+    {
+      "id": "silla",
+      "name": "신라대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "부산광역시",
+      "homepage": "https://www.silla.ac.kr"
+    },
+    {
+      "id": "shinhan",
+      "name": "신한대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.shinhan.ac.kr"
+    },
+    {
+      "id": "acts",
+      "name": "아신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.acts.ac.kr"
+    },
+    {
+      "id": "ajou",
+      "name": "아주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.ajou.ac.kr"
+    },
+    {
+      "id": "anyang",
+      "name": "안양대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.anyang.ac.kr"
+    },
+    {
+      "id": "yonsei",
+      "name": "연세대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.yonsei.ac.kr"
+    },
+    {
+      "id": "yonsei-mirae",
+      "name": "연세대학교(미래)",
+      "kind": "대학교",
+      "branch": "분교",
+      "founding": "사립",
+      "region": "강원특별자치도",
+      "homepage": "https://mirae.yonsei.ac.kr"
+    },
+    {
+      "id": "yu",
+      "name": "영남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.yu.ac.kr"
+    },
+    {
+      "id": "ytus",
+      "name": "영남신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.ytus.ac.kr"
+    },
+    {
+      "id": "ysu",
+      "name": "영산대학교(양산)",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상남도",
+      "homepage": "https://www.ysu.ac.kr"
+    },
+    {
+      "id": "youngsan",
+      "name": "영산선학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전라남도",
+      "homepage": "https://www.youngsan.ac.kr"
+    },
+    {
+      "id": "jesus",
+      "name": "예수대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.jesus.ac.kr"
+    },
+    {
+      "id": "yewon",
+      "name": "예원예술대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.yewon.ac.kr"
+    },
+    {
+      "id": "yongin",
+      "name": "용인대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.yongin.ac.kr"
+    },
+    {
+      "id": "woosuk",
+      "name": "우석대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.woosuk.ac.kr"
+    },
+    {
+      "id": "wsu",
+      "name": "우송대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.wsu.ac.kr"
+    },
+    {
+      "id": "unist",
+      "name": "울산과학기술원",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "특별법법",
+      "region": "울산광역시",
+      "homepage": "https://www.unist.ac.kr"
+    },
+    {
+      "id": "ulsan",
+      "name": "울산대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "울산광역시",
+      "homepage": "https://www.ulsan.ac.kr"
+    },
+    {
+      "id": "wku",
+      "name": "원광대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.wku.ac.kr"
+    },
+    {
+      "id": "uu",
+      "name": "위덕대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.uu.ac.kr"
+    },
+    {
+      "id": "u1",
+      "name": "유원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.u1.ac.kr"
+    },
+    {
+      "id": "eulji",
+      "name": "을지대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.eulji.ac.kr"
+    },
+    {
+      "id": "ewha",
+      "name": "이화여자대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.ewha.ac.kr"
+    },
+    {
+      "id": "inje",
+      "name": "인제대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상남도",
+      "homepage": "https://www.inje.ac.kr"
+    },
+    {
+      "id": "iccu",
+      "name": "인천가톨릭대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "인천광역시",
+      "homepage": "https://www.iccu.ac.kr"
+    },
+    {
+      "id": "inu",
+      "name": "인천대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립대법",
+      "region": "인천광역시",
+      "homepage": "https://www.inu.ac.kr"
+    },
+    {
+      "id": "inha",
+      "name": "인하대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "인천광역시",
+      "homepage": "https://www.inha.ac.kr"
+    },
+    {
+      "id": "puts",
+      "name": "장로회신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.puts.ac.kr"
+    },
+    {
+      "id": "chonnam",
+      "name": "전남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "광주광역시",
+      "homepage": "https://www.chonnam.ac.kr"
+    },
+    {
+      "id": "jbnu",
+      "name": "전북대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.jbnu.ac.kr"
+    },
+    {
+      "id": "jnue",
+      "name": "전주교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.jnue.kr"
+    },
+    {
+      "id": "jj",
+      "name": "전주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.jj.ac.kr"
+    },
+    {
+      "id": "jeju",
+      "name": "제주국제대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "제주특별자치도",
+      "homepage": "https://www.jeju.ac.kr"
+    },
+    {
+      "id": "jejunu",
+      "name": "제주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "제주특별자치도",
+      "homepage": "https://www.jejunu.ac.kr"
+    },
+    {
+      "id": "chosun",
+      "name": "조선대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.chosun.ac.kr"
+    },
+    {
+      "id": "joongbu",
+      "name": "중부대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.joongbu.ac.kr"
+    },
+    {
+      "id": "cau",
+      "name": "중앙대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.cau.ac.kr"
+    },
+    {
+      "id": "sangha-admission",
+      "name": "중앙승가대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://admission.sangha.ac.kr"
+    },
+    {
+      "id": "jwu",
+      "name": "중원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.jwu.ac.kr"
+    },
+    {
+      "id": "cue",
+      "name": "진주교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경상남도",
+      "homepage": "https://www.cue.ac.kr"
+    },
+    {
+      "id": "cha",
+      "name": "차의과학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.cha.ac.kr"
+    },
+    {
+      "id": "cs",
+      "name": "창신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상남도",
+      "homepage": "https://www.cs.ac.kr"
+    },
+    {
+      "id": "chungwoon",
+      "name": "청운대학교",
+      "kind": "산업대학",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.chungwoon.ac.kr"
+    },
+    {
+      "id": "cje",
+      "name": "청주교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "충청북도",
+      "homepage": "https://www.cje.ac.kr"
+    },
+    {
+      "id": "cju",
+      "name": "청주대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청북도",
+      "homepage": "https://www.cju.ac.kr"
+    },
+    {
+      "id": "cdu",
+      "name": "초당대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전라남도",
+      "homepage": "https://www.cdu.ac.kr"
+    },
+    {
+      "id": "chongshin",
+      "name": "총신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.chongshin.ac.kr"
+    },
+    {
+      "id": "chugye",
+      "name": "추계예술대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.chugye.ac.kr"
+    },
+    {
+      "id": "cnue",
+      "name": "춘천교육대학교",
+      "kind": "교육대학",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.cnue.ac.kr"
+    },
+    {
+      "id": "cnu",
+      "name": "충남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "대전광역시",
+      "homepage": "https://www.cnu.ac.kr"
+    },
+    {
+      "id": "chungbuk",
+      "name": "충북대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "충청북도",
+      "homepage": "https://www.chungbuk.ac.kr"
+    },
+    {
+      "id": "calvin",
+      "name": "칼빈대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.calvin.ac.kr"
+    },
+    {
+      "id": "ptu",
+      "name": "평택대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.ptu.ac.kr"
+    },
+    {
+      "id": "postech",
+      "name": "포항공과대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.postech.ac.kr"
+    },
+    {
+      "id": "hknu",
+      "name": "한경국립대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "경기도",
+      "homepage": "https://www.hknu.ac.kr"
+    },
+    {
+      "id": "tukorea",
+      "name": "한국공학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.tukorea.ac.kr"
+    },
+    {
+      "id": "kaist",
+      "name": "한국과학기술원",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "특별법법",
+      "region": "대전광역시",
+      "homepage": "https://www.kaist.ac.kr"
+    },
+    {
+      "id": "knue",
+      "name": "한국교원대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "충청북도",
+      "homepage": "https://www.knue.ac.kr"
+    },
+    {
+      "id": "koreatech",
+      "name": "한국기술교육대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.koreatech.ac.kr"
+    },
+    {
+      "id": "bible",
+      "name": "한국성서대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.bible.ac.kr"
+    },
+    {
+      "id": "kentech",
+      "name": "한국에너지공과대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "특별법법",
+      "region": "전라남도",
+      "homepage": "https://www.kentech.ac.kr"
+    },
+    {
+      "id": "hufs",
+      "name": "한국외국어대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.hufs.ac.kr"
+    },
+    {
+      "id": "knuh",
+      "name": "한국전통문화대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "특별법국",
+      "region": "충청남도",
+      "homepage": "https://www.knuh.ac.kr"
+    },
+    {
+      "id": "knsu",
+      "name": "한국체육대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "국립",
+      "region": "서울특별시",
+      "homepage": "https://www.knsu.ac.kr"
+    },
+    {
+      "id": "kbtus",
+      "name": "한국침례신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.kbtus.ac.kr"
+    },
+    {
+      "id": "kau",
+      "name": "한국항공대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.kau.ac.kr"
+    },
+    {
+      "id": "hannam",
+      "name": "한남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "대전광역시",
+      "homepage": "https://www.hannam.ac.kr"
+    },
+    {
+      "id": "handong",
+      "name": "한동대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경상북도",
+      "homepage": "https://www.handong.edu"
+    },
+    {
+      "id": "halla",
+      "name": "한라대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.halla.ac.kr"
+    },
+    {
+      "id": "hallym",
+      "name": "한림대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "강원특별자치도",
+      "homepage": "https://www.hallym.ac.kr"
+    },
+    {
+      "id": "hanseo",
+      "name": "한서대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.hanseo.ac.kr"
+    },
+    {
+      "id": "hansung",
+      "name": "한성대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.hansung.ac.kr"
+    },
+    {
+      "id": "hansei",
+      "name": "한세대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.hansei.ac.kr"
+    },
+    {
+      "id": "hs",
+      "name": "한신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.hs.ac.kr"
+    },
+    {
+      "id": "hanyang",
+      "name": "한양대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.hanyang.ac.kr"
+    },
+    {
+      "id": "hanyang-erica",
+      "name": "한양대학교(ERICA)",
+      "kind": "대학교",
+      "branch": "분교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.hanyang.ac.kr"
+    },
+    {
+      "id": "hanil",
+      "name": "한일장신대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.hanil.ac.kr"
+    },
+    {
+      "id": "uhs",
+      "name": "협성대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.uhs.ac.kr"
+    },
+    {
+      "id": "honam",
+      "name": "호남대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.honam.ac.kr"
+    },
+    {
+      "id": "htus",
+      "name": "호남신학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "광주광역시",
+      "homepage": "https://www.htus.ac.kr"
+    },
+    {
+      "id": "hoseo",
+      "name": "호서대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "충청남도",
+      "homepage": "https://www.hoseo.ac.kr"
+    },
+    {
+      "id": "howon",
+      "name": "호원대학교",
+      "kind": "산업대학",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "전북특별자치도",
+      "homepage": "https://www.howon.ac.kr"
+    },
+    {
+      "id": "hongik",
+      "name": "홍익대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "서울특별시",
+      "homepage": "https://www.hongik.ac.kr"
+    },
+    {
+      "id": "hsmu",
+      "name": "화성의과학대학교",
+      "kind": "대학교",
+      "branch": "본교",
+      "founding": "사립",
+      "region": "경기도",
+      "homepage": "https://www.hsmu.ac.kr"
+    }
+  ]
+}

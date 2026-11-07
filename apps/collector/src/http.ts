@@ -12,7 +12,12 @@ export interface FetchResult {
   fromCache: boolean;
 }
 
+/** robots.txt 가 이 경로의 수집을 금지 */
 export class RobotsDisallowedError extends Error {}
+/** robots.txt 를 확인할 수 없음 (5xx·접속 실패). RFC 9309 에 따라 이번에는 수집하지 않는다 */
+export class RobotsUnavailableError extends Error {}
+
+type RobotsState = { kind: 'rules'; rules: RobotsRules } | { kind: 'unavailable'; reason: string };
 
 /**
  * 대학 서버에 부담을 주지 않는 요청기.
@@ -22,7 +27,7 @@ export class RobotsDisallowedError extends Error {}
  * - 누가 수집하는지 User-Agent 에 연락처를 밝힌다
  */
 export class PoliteFetcher {
-  private readonly robots = new Map<string, Promise<RobotsRules>>();
+  private readonly robots = new Map<string, Promise<RobotsState>>();
   private readonly lastAt = new Map<string, number>();
   private readonly queue = new Map<string, Promise<unknown>>();
 
@@ -34,22 +39,35 @@ export class PoliteFetcher {
     return this.opts.userAgent;
   }
 
-  private async rulesFor(origin: string): Promise<RobotsRules> {
+  /**
+   * RFC 9309: 4xx 이면 제한 없음, 5xx·접속 실패면 전체 금지로 본다.
+   */
+  private async rulesFor(origin: string): Promise<RobotsState> {
     let p = this.robots.get(origin);
     if (!p) {
-      p = (async () => {
+      p = (async (): Promise<RobotsState> => {
         try {
           const res = await this.raw(`${origin}/robots.txt`, {});
-          if (res.status >= 400) return { allow: [], disallow: [], crawlDelay: null };
-          return parseRobots(res.body.toString('utf8'), this.opts.userAgent);
-        } catch {
-          // robots.txt 를 못 읽으면 보수적으로 진행하되 기본 간격을 지킨다
-          return { allow: [], disallow: [], crawlDelay: null };
+          if (res.status >= 500) return { kind: 'unavailable', reason: `robots.txt 응답 ${res.status}` };
+          if (res.status >= 400) return { kind: 'rules', rules: { allow: [], disallow: [], crawlDelay: null } };
+          return { kind: 'rules', rules: parseRobots(res.body.toString('utf8'), this.opts.userAgent) };
+        } catch (err) {
+          return { kind: 'unavailable', reason: `robots.txt 확인 실패: ${(err as Error).message}` };
         }
       })();
       this.robots.set(origin, p);
     }
     return p;
+  }
+
+  /** 이 주소를 지금 수집해도 되는지 (요청하지 않고 확인만) */
+  async check(url: string): Promise<{ ok: true } | { ok: false; reason: 'disallowed' | 'unavailable'; message: string }> {
+    const u = new URL(url);
+    const state = await this.rulesFor(u.origin);
+    if (state.kind === 'unavailable') return { ok: false, reason: 'unavailable', message: state.reason };
+    if (!isAllowed(state.rules, u.pathname + u.search))
+      return { ok: false, reason: 'disallowed', message: `robots.txt 가 수집을 금지: ${u.host}${u.pathname}` };
+    return { ok: true };
   }
 
   private async raw(url: string, headers: Record<string, string>) {
@@ -78,11 +96,12 @@ export class PoliteFetcher {
 
   async get(url: string, init: { method?: 'GET' | 'POST'; body?: string; headers?: Record<string, string> } = {}): Promise<FetchResult> {
     const u = new URL(url);
-    const rules = await this.rulesFor(u.origin);
-    if (!isAllowed(rules, u.pathname + u.search)) {
-      throw new RobotsDisallowedError(`robots.txt 가 수집을 허용하지 않습니다: ${url}`);
+    const state = await this.rulesFor(u.origin);
+    if (state.kind === 'unavailable') throw new RobotsUnavailableError(state.reason);
+    if (!isAllowed(state.rules, u.pathname + u.search)) {
+      throw new RobotsDisallowedError(`robots.txt 가 수집을 금지: ${u.host}${u.pathname}`);
     }
-    const delay = Math.max(this.opts.minDelayMs, (rules.crawlDelay ?? 0) * 1000);
+    const delay = Math.max(this.opts.minDelayMs, (state.rules.crawlDelay ?? 0) * 1000);
 
     return this.serialize(u.host, async () => {
       const wait = (this.lastAt.get(u.host) ?? 0) + delay - Date.now();
