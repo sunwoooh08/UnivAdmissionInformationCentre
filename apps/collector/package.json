@@ -1,0 +1,18 @@
+{
+  "name": "@susi/collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "collect": "node dist/run.js",
+    "test": "node --test \"dist/**/*.test.js\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@susi/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0"
+  }
+}
