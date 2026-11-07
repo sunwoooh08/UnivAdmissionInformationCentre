@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import {
   admissionEvents,
+  computeOutlook,
   daysUntil,
+  formatDate,
   fillRate,
   formatDday,
   formatRange,
@@ -13,6 +15,8 @@ import {
   type Outlook,
 } from '@susi/shared';
 import { api } from '@/lib/api';
+import { isLocal } from '@/lib/storage';
+import { ReportForm } from './ReportForm';
 import { HistoryChart } from './HistoryChart';
 import { OutlookChart } from './OutlookChart';
 
@@ -36,6 +40,12 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
       setOutlook(null);
       return;
     }
+    // 내가 입력한 항목은 서버에 없으므로 브라우저에서 계산한다
+    if (isLocal(admission)) {
+      setOutlook(computeOutlook(admission, rank));
+      setError(admission.history.length ? null : '충원 이력을 입력하면 계산할 수 있습니다.');
+      return;
+    }
     const ctrl = new AbortController();
     const timer = setTimeout(() => {
       api
@@ -55,7 +65,7 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
       clearTimeout(timer);
       ctrl.abort();
     };
-  }, [admission.id, rank]);
+  }, [admission, rank]);
 
   const history = sortHistory(admission.history);
 
@@ -67,7 +77,7 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
             {admission.univ} {admission.dept}
           </h2>
           <p className="lead">
-            {admission.track} · 올해 모집 {admission.quota}명{admission.sample ? ' · 예시 데이터' : ''}
+            {admission.track} · 올해 모집 {admission.quota}명{isLocal(admission) ? ' · 내가 입력한 정보' : ''}
           </p>
         </div>
         {onEdit && (
@@ -228,6 +238,26 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
           </details>
         </div>
       </div>
+
+      {!isLocal(admission) && (
+        <>
+          <h3>출처</h3>
+          <ul className="sources">
+            {admission.sources.map((src) => (
+              <li key={src.url}>
+                <a href={src.url} target="_blank" rel="noopener noreferrer">
+                  {src.label}
+                </a>{' '}
+                <span className="muted small">확인 {formatDate(src.checkedAt)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">
+            대학이 게시한 자료에서 자동으로 수집해 정해진 규칙으로 검증한 뒤 반영한 값입니다. 최종 확인은 출처 원문으로 하세요.
+          </p>
+          <ReportForm admissionId={admission.id} />
+        </>
+      )}
     </section>
   );
 }

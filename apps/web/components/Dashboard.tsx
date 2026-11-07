@@ -16,7 +16,7 @@ import {
   type CommonSchedule,
 } from '@susi/shared';
 import { api } from '@/lib/api';
-import { loadMine, MAX_APPLICATIONS, saveMine, type MineState } from '@/lib/storage';
+import { isLocal, loadLocal, loadMine, makeLocal, MAX_APPLICATIONS, saveLocal, saveMine, type MineState } from '@/lib/storage';
 import { AdmissionForm } from './AdmissionForm';
 import { Detail } from './Detail';
 import { Timeline } from './Timeline';
@@ -33,6 +33,7 @@ export function Dashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<{ mode: 'create' } | { mode: 'edit'; admission: Admission } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [local, setLocal] = useState<Admission[]>([]);
 
   const updateMine = useCallback((fn: (m: MineState) => MineState) => {
     setMine((prev) => {
@@ -46,9 +47,14 @@ export function Dashboard() {
   useEffect(() => {
     api.schedule().then(setSchedule).catch((e: Error) => setLoadError(e.message));
     const saved = loadMine();
+    const mineLocal = loadLocal();
+    setLocal(mineLocal);
     setMine(saved);
     setSelectedId(saved.ids[0] ?? null);
-    Promise.all(saved.ids.map((id) => api.get(id).catch(() => null))).then((list) => {
+    const localById = new Map(mineLocal.map((a) => [a.id, a]));
+    Promise.all(
+      saved.ids.map((id) => (id.startsWith('local-') ? Promise.resolve(localById.get(id) ?? null) : api.get(id).catch(() => null))),
+    ).then((list) => {
       const found = list.filter((a): a is Admission => a !== null);
       setCache((c) => ({ ...c, ...Object.fromEntries(found.map((a) => [a.id, a])) }));
       if (found.length !== saved.ids.length) {
@@ -74,6 +80,17 @@ export function Dashboard() {
     return () => clearTimeout(timer);
   }, [query, category]);
 
+  // 내가 입력한 항목도 검색 결과에 함께 보여준다
+  const localMatches = useMemo(() => {
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    return local.filter(
+      (a) =>
+        (!category || a.category === category) &&
+        terms.every((t) => `${a.univ} ${a.track} ${a.category} ${a.dept}`.toLowerCase().includes(t)),
+    );
+  }, [local, query, category]);
+  const shown = useMemo(() => [...localMatches, ...results], [localMatches, results]);
+
   const myAdmissions = useMemo(
     () => mine.ids.map((id) => cache[id]).filter((a): a is Admission => Boolean(a)),
     [mine.ids, cache],
@@ -96,15 +113,19 @@ export function Dashboard() {
     if (selectedId === id) setSelectedId(mine.ids.find((x) => x !== id) ?? null);
   }
 
+  function storeLocal(next: Admission[]) {
+    setLocal(next);
+    saveLocal(next);
+    setCache((c) => ({ ...c, ...Object.fromEntries(next.map((a) => [a.id, a])) }));
+  }
+
   async function submitForm(input: AdmissionInput) {
     if (form?.mode === 'edit') {
-      const saved = await api.update(form.admission.id, input);
-      setCache((c) => ({ ...c, [saved.id]: saved }));
-      setResults((r) => r.map((a) => (a.id === saved.id ? saved : a)));
+      const saved = makeLocal(input, form.admission.id);
+      storeLocal(local.map((a) => (a.id === saved.id ? saved : a)));
     } else {
-      const saved = await api.create(input);
-      setCache((c) => ({ ...c, [saved.id]: saved }));
-      setResults((r) => [saved, ...r]);
+      const saved = makeLocal(input);
+      storeLocal([saved, ...local]);
       if (!full) add(saved.id);
     }
     setForm(null);
@@ -114,9 +135,8 @@ export function Dashboard() {
     if (form?.mode !== 'edit') return;
     if (!window.confirm('이 항목을 삭제할까요?')) return;
     const id = form.admission.id;
-    await api.remove(id);
     remove(id);
-    setResults((r) => r.filter((a) => a.id !== id));
+    storeLocal(local.filter((a) => a.id !== id));
     setForm(null);
   }
 
@@ -165,7 +185,7 @@ export function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {results.map((a) => {
+                {shown.map((a) => {
                   const added = mine.ids.includes(a.id);
                   return (
                     <tr key={a.id}>
@@ -175,7 +195,7 @@ export function Dashboard() {
                         </div>
                         <div className="sub">
                           <span className="show-sm">{a.track} · </span>
-                          {a.sample ? '예시 데이터' : `모집 ${a.quota}명`}
+                          {isLocal(a) ? '내가 입력' : `모집 ${a.quota}명`}
                         </div>
                       </td>
                       <td className="hide-sm">{a.track}</td>
@@ -191,14 +211,21 @@ export function Dashboard() {
                 })}
               </tbody>
             </table>
-            {!searching && results.length === 0 && <p className="empty">검색 결과가 없습니다. &lsquo;직접 추가&rsquo;로 입력할 수 있습니다.</p>}
+            {!searching && shown.length === 0 && (
+              <p className="empty">
+                {query || category ? '검색 결과가 없습니다.' : '아직 수집된 대학이 없습니다.'} 찾는 대학이 없으면 &lsquo;직접 추가&rsquo;로 입력하세요. 직접 입력한 정보는 이 브라우저에만 저장됩니다.
+              </p>
+            )}
           </div>
         </section>
 
         {form && (
           <section>
             <h2>{form.mode === 'edit' ? '지원 정보 수정' : '지원 정보 직접 추가'}</h2>
-            <p className="lead">모집요강과 대학 입학처의 전년도 입시결과를 보고 입력하세요.</p>
+            <p className="lead">
+              모집요강과 대학 입학처의 전년도 입시결과를 보고 입력하세요. 입력한 정보는 이 브라우저에만 저장되고 다른 사람에게는
+              보이지 않습니다.
+            </p>
             <AdmissionForm
               key={form.mode === 'edit' ? form.admission.id : 'new'}
               initial={form.mode === 'edit' ? form.admission : undefined}
@@ -306,7 +333,7 @@ export function Dashboard() {
                 return { ...m, ranks };
               })
             }
-            onEdit={selected.sample ? undefined : () => setForm({ mode: 'edit', admission: selected })}
+            onEdit={isLocal(selected) ? () => setForm({ mode: 'edit', admission: selected }) : undefined}
           />
         )}
 

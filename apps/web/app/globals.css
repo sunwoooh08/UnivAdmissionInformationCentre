@@ -160,3 +160,9 @@ footer.site a { color: var(--ink-2); }
 }
 .show-sm { display: none; }
 @media (max-width: 600px) { .show-sm { display: inline; } }
+
+.sources { margin: 0 0 8px; padding-left: 18px; font-size: 14px; }
+.sources li { margin: 2px 0; }
+.sources a { color: var(--accent); }
+textarea { font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 4px; padding: 8px 10px; resize: vertical; }
+.report { max-width: 560px; margin-top: 8px; }
