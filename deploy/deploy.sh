@@ -49,7 +49,8 @@ ask_yn() { # ask_yn "질문" y|n  → 0(yes)/1(no)
   [[ $__ans =~ ^[Yy] ]]
 }
 rand() { openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c "${1:-48}"; }
-as_app() { sudo -u "$APP_USER" -H bash -lc "$*"; }
+# 실행 계정으로 명령 실행. 현재 디렉터리(/root 등)에 접근 권한이 없을 수 있어 홈에서 시작한다.
+as_app() { (cd / && sudo -u "$APP_USER" -H bash -lc "cd ~ && $*"); }
 
 # env 파일에서 기존 값 읽기 (없으면 빈 문자열)
 env_get() { [[ -f $1 ]] && sed -n "s/^$2='\(.*\)'$/\1/p" "$1" | tail -1 || true; }
@@ -71,6 +72,8 @@ if [[ $EUID -ne 0 ]]; then
 fi
 . /etc/os-release
 [[ ${ID:-} == ubuntu ]] || c_warn "Ubuntu가 아닌 배포판(${PRETTY_NAME:-unknown})입니다. 계속 진행합니다."
+
+cd /
 
 FIRST_RUN=1
 [[ -f $CONF_DIR/api.env ]] && FIRST_RUN=0
@@ -181,7 +184,7 @@ SESSION_SECRET=$(env_get "$CONF_DIR/admin.env" SESSION_SECRET); [[ ${#SESSION_SE
 LOG_RETENTION_DAYS=$(env_get "$CONF_DIR/api.env" LOG_RETENTION_DAYS); LOG_RETENTION_DAYS=${LOG_RETENTION_DAYS:-90}
 
 if [[ -n $ADMIN_PW ]]; then
-  ADMIN_PASSWORD_HASH=$(cd "$ADMIN_DIR" && printf '%s' "$ADMIN_PW" | sudo -u "$APP_USER" node scripts/hash-password.mjs)
+  ADMIN_PASSWORD_HASH=$(cd "$ADMIN_DIR" && printf '%s' "$ADMIN_PW" | sudo -u "$APP_USER" -H node scripts/hash-password.mjs)
   unset ADMIN_PW ADMIN_PW2
 fi
 
@@ -234,7 +237,7 @@ as_app "'$BASE/start.sh'"
 # 재부팅 시 자동 실행
 ( crontab -u "$APP_USER" -l 2>/dev/null | grep -v "$BASE/start.sh" || true
   echo "@reboot sleep 15 && $BASE/start.sh >> $LOG_DIR/boot.log 2>&1" ) | crontab -u "$APP_USER" -
-systemctl enable --now cron >/dev/null 2>&1 || true
+if pidof systemd >/dev/null 2>&1; then systemctl enable --now cron >/dev/null 2>&1 || true; else service cron start >/dev/null 2>&1 || true; fi
 
 # 로그 파일 정리 (logrotate)
 cat >/etc/logrotate.d/uaic <<EOF
@@ -293,8 +296,13 @@ fi
 ln -sf /etc/nginx/sites-available/uaic /etc/nginx/sites-enabled/uaic
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
-systemctl enable nginx >/dev/null 2>&1
-systemctl reload nginx || systemctl restart nginx
+if pidof systemd >/dev/null 2>&1; then
+  systemctl enable nginx >/dev/null 2>&1 || true
+  systemctl reload nginx || systemctl restart nginx
+else
+  # systemd 가 없는 환경(일부 컨테이너)
+  nginx -s reload 2>/dev/null || nginx
+fi
 
 if [[ $USE_TLS == y ]]; then
   c_step "HTTPS 인증서 발급"
