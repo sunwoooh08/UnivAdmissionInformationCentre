@@ -21,6 +21,8 @@ import { AdmissionForm } from './AdmissionForm';
 import { Detail } from './Detail';
 import { Timeline } from './Timeline';
 
+const PAGE_SIZE = 20;
+
 export function Dashboard() {
   const [today] = useState(() => todayKST());
   const [schedule, setSchedule] = useState<CommonSchedule | null>(null);
@@ -34,6 +36,8 @@ export function Dashboard() {
   const [form, setForm] = useState<{ mode: 'create' } | { mode: 'edit'; admission: Admission } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [local, setLocal] = useState<Admission[]>([]);
+  const [stats, setStats] = useState<{ universities: number; admissions: number } | null>(null);
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   const updateMine = useCallback((fn: (m: MineState) => MineState) => {
     setMine((prev) => {
@@ -46,6 +50,7 @@ export function Dashboard() {
   // 첫 로드: 공통 일정 + 저장된 내 지원 목록
   useEffect(() => {
     api.schedule().then(setSchedule).catch((e: Error) => setLoadError(e.message));
+    api.stats().then(setStats).catch(() => undefined);
     const saved = loadMine();
     const mineLocal = loadLocal();
     setLocal(mineLocal);
@@ -66,6 +71,12 @@ export function Dashboard() {
 
   // 검색 (입력 후 잠시 멈추면 요청)
   useEffect(() => {
+    setVisible(PAGE_SIZE);
+    if (!query.trim() && !category) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
     setSearching(true);
     const timer = setTimeout(() => {
       api
@@ -174,46 +185,63 @@ export function Dashboard() {
           </div>
 
           <div className="table-scroll" style={{ marginTop: 12 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>대학 · 학과</th>
-                  <th className="hide-sm">전형</th>
-                  <th className="num hide-sm">모집</th>
-                  <th>최초합격 발표</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map((a) => {
-                  const added = mine.ids.includes(a.id);
-                  return (
-                    <tr key={a.id}>
-                      <td>
-                        <div className="title">
-                          {a.univ} {a.dept}
-                        </div>
-                        <div className="sub">
-                          <span className="show-sm">{a.track} · </span>
-                          {isLocal(a) ? '내가 입력' : `모집 ${a.quota}명`}
-                        </div>
-                      </td>
-                      <td className="hide-sm">{a.track}</td>
-                      <td className="num hide-sm">{a.quota}</td>
-                      <td className="nowrap">{formatDate(a.schedule.final)}</td>
-                      <td className="actions">
-                        <button onClick={() => (added ? setSelectedId(a.id) : add(a.id))} disabled={!added && full}>
-                          {added ? '보기' : '추가'}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {shown.length > 0 && (
+              <table>
+                <thead>
+                  <tr>
+                    <th>대학 · 학과</th>
+                    <th className="hide-sm">전형</th>
+                    <th className="num hide-sm">모집</th>
+                    <th>최초합격 발표</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.slice(0, visible).map((a) => {
+                    const added = mine.ids.includes(a.id);
+                    return (
+                      <tr key={a.id}>
+                        <td>
+                          <div className="title">
+                            {a.univ} {a.dept}
+                          </div>
+                          <div className="sub">
+                            <span className="show-sm">{a.track} · </span>
+                            {isLocal(a) ? '내가 입력' : a.quota ? `모집 ${a.quota}명` : '모집인원 확인 중'}
+                          </div>
+                        </td>
+                        <td className="hide-sm">{a.track}</td>
+                        <td className="num hide-sm">{a.quota ?? '–'}</td>
+                        <td className="nowrap">
+                          {a.schedule.final ? formatDate(a.schedule.final) : <span className="muted">확인 중</span>}
+                        </td>
+                        <td className="actions">
+                          <button onClick={() => (added ? setSelectedId(a.id) : add(a.id))} disabled={!added && full}>
+                            {added ? '보기' : '추가'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            {shown.length > visible && (
+              <p>
+                <button onClick={() => setVisible((v) => v + PAGE_SIZE)}>
+                  더 보기 ({visible} / {shown.length}
+                  {results.length >= 100 ? '+' : ''})
+                </button>
+              </p>
+            )}
             {!searching && shown.length === 0 && (
               <p className="empty">
-                {query || category ? '검색 결과가 없습니다.' : '아직 수집된 대학이 없습니다.'} 찾는 대학이 없으면 &lsquo;직접 추가&rsquo;로 입력하세요. 직접 입력한 정보는 이 브라우저에만 저장됩니다.
+                {query || category
+                  ? '검색 결과가 없습니다.'
+                  : stats && stats.admissions > 0
+                    ? `대학 ${stats.universities}곳, 모집단위 ${stats.admissions.toLocaleString()}개의 충원 자료가 있습니다. 대학이나 학과 이름으로 검색하세요.`
+                    : '아직 수집된 대학이 없습니다.'}{' '}
+                찾는 대학이 없으면 &lsquo;직접 추가&rsquo;로 입력하세요. 직접 입력한 정보는 이 브라우저에만 저장됩니다.
               </p>
             )}
           </div>

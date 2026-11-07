@@ -27,6 +27,7 @@ export const api = {
     const qs = p.toString();
     return request<Admission[]>(`/api/admissions${qs ? `?${qs}` : ''}`);
   },
+  stats: () => request<{ universities: number; admissions: number }>('/api/admissions/stats'),
   get: (id: string) => request<Admission>(`/api/admissions/${encodeURIComponent(id)}`),
   outlook: (id: string, rank: number, signal?: AbortSignal) =>
     request<Outlook>(`/api/admissions/${encodeURIComponent(id)}/outlook?rank=${rank}`, { signal }),
