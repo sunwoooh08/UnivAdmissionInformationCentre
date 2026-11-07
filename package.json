@@ -1,0 +1,23 @@
+{
+  "name": "univ-admission-information-centre",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @susi/shared && npm run build -w @susi/api && npm run build -w @susi/web",
+    "dev": "npm run build -w @susi/shared && concurrently -n api,web -c blue,green \"npm run dev -w @susi/api\" \"npm run dev -w @susi/web\"",
+    "start": "concurrently -n api,web -c blue,green \"npm run start -w @susi/api\" \"npm run start -w @susi/web\"",
+    "test": "npm run build -w @susi/shared && npm run test -w @susi/shared",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}
