@@ -193,7 +193,7 @@ if ask_yn "방화벽(ufw)을 켜고 SSH·HTTP·HTTPS만 열까요?" y; then SETU
 c_step "시스템 패키지 설치 (apt)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y ca-certificates curl gnupg git screen nginx build-essential openssl cron poppler-utils
+apt-get install -y ca-certificates curl gnupg git screen nginx build-essential openssl cron poppler-utils poppler-data
 
 if ! command -v node >/dev/null || [[ $(node -p 'process.versions.node.split(".")[0]') -lt $NODE_MAJOR ]]; then
   c_info "Node.js ${NODE_MAJOR}.x 저장소 추가"
