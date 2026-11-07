@@ -87,7 +87,21 @@ npm test
 curl -fsSL -H "Authorization: token <GitHub 토큰>" https://raw.githubusercontent.com/sunwoooh08/UnivAdmissionInformationCentre/main/deploy/deploy.sh -o deploy.sh && sudo bash deploy.sh
 ```
 
-공개 저장소라면 `-H "Authorization: ..."` 부분은 빼도 됩니다. 스크립트가 하는 일은 다음과 같습니다.
+공개 저장소라면 `-H "Authorization: ..."` 부분은 빼도 됩니다.
+
+GitHub 아이디와 토큰은 실행 중에 물어봅니다. 미리 넘기려면 인자나 환경변수를 씁니다. 환경변수 방식은 토큰이 셸 기록에 남지 않습니다.
+
+```bash
+sudo bash deploy.sh --gh-user <아이디> --gh-token <토큰> --branch main
+```
+
+```bash
+sudo GH_USER=<아이디> GH_TOKEN=<토큰> bash deploy.sh
+```
+
+토큰은 GitHub → Settings → Developer settings → Fine-grained tokens에서 두 저장소를 선택하고 Contents 권한을 Read-only로 만들면 됩니다. 스크립트는 설치를 시작하기 전에 두 저장소 접근을 먼저 확인하고, 실패하면 이유를 보여준 뒤 토큰을 다시 묻습니다.
+
+스크립트가 하는 일은 다음과 같습니다.
 
 1. GitHub 사용자명·토큰, 도메인, 어드민 아이디·비밀번호 입력
 2. apt로 git, screen, nginx, build-essential, Node.js 22 설치

@@ -3,6 +3,10 @@
 # 빈 Ubuntu(22.04 / 24.04) 서버에 본 서비스(API + 웹)와 어드민을 설치·배포한다.
 #
 #   sudo bash deploy.sh
+#   sudo bash deploy.sh --gh-user <아이디> --gh-token <토큰> [--branch main]
+#   sudo GH_USER=<아이디> GH_TOKEN=<토큰> bash deploy.sh      (토큰이 셸 기록에 남지 않음)
+#
+# 인자나 환경변수로 주지 않은 값은 실행 중에 물어본다.
 #
 # 처음 실행: 패키지 설치 → GitHub 인증 → 클론 → 환경변수 생성 → 빌드 → screen 으로 실행 → nginx 연결
 # 다시 실행: 최신 코드 pull → 빌드 → 재시작 (기존 비밀값과 데이터는 유지)
@@ -66,9 +70,22 @@ write_env() { # write_env 파일 KEY=VALUE...
   chmod 600 "$file"
 }
 
-# ───────────────────────── 0. 권한 확인 ─────────────────────────
+# ───────────────────────── 0. 인자 & 권한 확인 ─────────────────────────
+ARG_GH_USER=${GH_USER:-}
+ARG_GH_TOKEN=${GH_TOKEN:-}
+ARG_BRANCH=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --gh-user) ARG_GH_USER=${2:-}; shift 2 ;;
+    --gh-token) ARG_GH_TOKEN=${2:-}; shift 2 ;;
+    --branch) ARG_BRANCH=${2:-}; shift 2 ;;
+    -h | --help) sed -n '2,12p' "$0"; exit 0 ;;
+    *) die "알 수 없는 인자: $1 (--help 참고)" ;;
+  esac
+done
+
 if [[ $EUID -ne 0 ]]; then
-  exec sudo -E bash "$0" "$@"
+  exec sudo GH_USER="$ARG_GH_USER" GH_TOKEN="$ARG_GH_TOKEN" bash "$0" ${ARG_BRANCH:+--branch "$ARG_BRANCH"}
 fi
 . /etc/os-release
 [[ ${ID:-} == ubuntu ]] || c_warn "Ubuntu가 아닌 배포판(${PRETTY_NAME:-unknown})입니다. 계속 진행합니다."
@@ -80,17 +97,57 @@ FIRST_RUN=1
 
 # ───────────────────────── 1. 입력 받기 ─────────────────────────
 c_step "설정 입력"
-ask GH_USER "GitHub 사용자명" "$(sudo -u "$APP_USER" git config --global user.name 2>/dev/null || echo sunwoooh08)"
-if [[ -f /home/$APP_USER/.git-credentials ]] && ! ask_yn "저장된 GitHub 토큰이 있습니다. 새로 입력할까요?" n; then
-  GH_TOKEN=""
-else
-  c_info "비공개 저장소라면 repo 읽기 권한이 있는 Personal Access Token 이 필요합니다."
-  c_info "(GitHub → Settings → Developer settings → Fine-grained tokens → Contents: Read-only)"
-  ask_secret GH_TOKEN "GitHub 토큰 (공개 저장소면 Enter)"
+CRED_FILE="/home/$APP_USER/.git-credentials"
+SAVED_TOKEN=""
+[[ -f $CRED_FILE ]] && SAVED_TOKEN=$(sed -n 's#^https://[^:]*:\([^@]*\)@github.com$#\1#p' "$CRED_FILE" | head -1)
+
+if [[ -n $ARG_GH_USER ]]; then GH_USER=$ARG_GH_USER; else
+  ask GH_USER "GitHub 아이디" "$(sed -n 's#^https://\([^:]*\):.*#\1#p' "$CRED_FILE" 2>/dev/null | head -1 || true)"
 fi
+[[ -n $GH_USER ]] || die "GitHub 아이디가 필요합니다."
+
+GH_TOKEN=$ARG_GH_TOKEN
+if [[ -z $GH_TOKEN ]]; then
+  if [[ -n $SAVED_TOKEN ]] && ! ask_yn "저장된 GitHub 토큰이 있습니다. 새로 입력할까요?" n; then
+    GH_TOKEN=$SAVED_TOKEN
+  else
+    c_info "비공개 저장소는 읽기 권한이 있는 Personal Access Token 이 필요합니다."
+    c_info "GitHub → Settings → Developer settings → Fine-grained tokens"
+    c_info "  Repository access: 두 저장소 선택 / Permissions: Contents → Read-only"
+    ask_secret GH_TOKEN "GitHub 토큰 (공개 저장소면 Enter)"
+  fi
+fi
+
 ask APP_REPO "본 서비스 저장소" "$DEFAULT_APP_REPO"
 ask ADMIN_REPO "어드민 저장소" "$DEFAULT_ADMIN_REPO"
-ask BRANCH "배포할 브랜치" "$DEFAULT_BRANCH"
+if [[ -n $ARG_BRANCH ]]; then BRANCH=$ARG_BRANCH; else ask BRANCH "배포할 브랜치" "$DEFAULT_BRANCH"; fi
+
+# 설치를 시작하기 전에 저장소에 접근되는지 확인 (실패하면 토큰을 다시 묻는다)
+check_repo_access() { # check_repo_access owner/name → HTTP 상태 출력
+  local auth=()
+  [[ -n $GH_TOKEN ]] && auth=(-H "Authorization: Bearer $GH_TOKEN")
+  curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "${auth[@]}" \
+    -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$1/branches/$BRANCH" 2>/dev/null || echo 000
+}
+if command -v curl >/dev/null; then
+  for attempt in 1 2 3; do
+    failed=""
+    for repo in "$APP_REPO" "$ADMIN_REPO"; do
+      code=$(check_repo_access "$repo")
+      case $code in
+        200) c_info "확인됨: $repo ($BRANCH)" ;;
+        000) c_warn "GitHub에 연결하지 못해 $repo 확인을 건너뜁니다." ;;
+        401) failed="토큰이 올바르지 않거나 만료되었습니다." ;;
+        *) failed="$repo 의 $BRANCH 브랜치에 접근할 수 없습니다 (HTTP $code). 저장소 이름·브랜치와 토큰의 저장소 선택·Contents 권한을 확인하세요." ;;
+      esac
+      [[ -n $failed ]] && break
+    done
+    [[ -z $failed ]] && break
+    c_warn "$failed"
+    [[ $attempt -lt 3 ]] || die "GitHub 저장소에 접근하지 못해 중단합니다."
+    ask_secret GH_TOKEN "GitHub 토큰 다시 입력"
+  done
+fi
 
 OLD_DOMAIN=$(env_get "$CONF_DIR/deploy.env" DOMAIN)
 ask DOMAIN "도메인 (없으면 Enter → IP로 접속)" "$OLD_DOMAIN"
@@ -151,25 +208,27 @@ install -d -o "$APP_USER" -g "$APP_USER" -m 0700 "$CONF_DIR" "$DATA_DIR"
 
 # ───────────────────────── 4. GitHub 인증 & 코드 받기 ─────────────────────────
 c_step "GitHub 인증 정보 저장"
-as_app "git config --global user.name '$GH_USER'"
 as_app "git config --global credential.helper store"
-if [[ -n $GH_TOKEN ]]; then
+if [[ -n $GH_TOKEN && $GH_TOKEN != "$SAVED_TOKEN" ]]; then
   umask 077
   printf 'https://%s:%s@github.com\n' "$GH_USER" "$GH_TOKEN" >"/home/$APP_USER/.git-credentials"
   chown "$APP_USER:$APP_USER" "/home/$APP_USER/.git-credentials"
   chmod 600 "/home/$APP_USER/.git-credentials"
   c_info "~${APP_USER}/.git-credentials 에 저장 (권한 600)"
 fi
-unset GH_TOKEN
+unset GH_TOKEN SAVED_TOKEN ARG_GH_TOKEN
 
 sync_repo() { # sync_repo owner/name 경로
   local repo=$1 dir=$2
+  # 인증 실패 시 아이디/비밀번호를 묻고 멈추지 않도록 한다
   if [[ -d $dir/.git ]]; then
     c_info "$repo 업데이트"
-    as_app "cd '$dir' && git fetch --prune origin '$BRANCH' && git checkout -q '$BRANCH' && git reset --hard -q 'origin/$BRANCH'"
+    as_app "cd '$dir' && GIT_TERMINAL_PROMPT=0 git fetch --prune origin '$BRANCH' && git checkout -q '$BRANCH' && git reset --hard -q 'origin/$BRANCH'" ||
+      die "$repo 를 받지 못했습니다. 비공개 저장소라면 토큰 권한(Contents: Read)과 저장소 이름·브랜치를 확인하세요."
   else
     c_info "$repo 클론"
-    as_app "git clone --branch '$BRANCH' 'https://github.com/$repo.git' '$dir'"
+    as_app "GIT_TERMINAL_PROMPT=0 git clone --branch '$BRANCH' 'https://github.com/$repo.git' '$dir'" ||
+      die "$repo 를 받지 못했습니다. 비공개 저장소라면 토큰 권한(Contents: Read)과 저장소 이름·브랜치를 확인하세요."
   fi
   as_app "cd '$dir' && git log -1 --format='    %h %s'"
 }
@@ -254,10 +313,14 @@ EOF
 # ───────────────────────── 8. nginx ─────────────────────────
 c_step "nginx 설정"
 SERVER_NAME=${DOMAIN:-_}
+# IPv6 가 꺼진 서버에서는 [::] 에 listen 하면 nginx 가 시작되지 않는다
+HAS_V6=0
+[[ -s /proc/net/if_inet6 ]] && HAS_V6=1
+listen6() { [[ $HAS_V6 == 1 ]] && echo "    listen [::]:$1${2:+ $2};" || true; }
 cat >/etc/nginx/sites-available/uaic <<EOF
 server {
     listen 80 default_server;
-    listen [::]:80 default_server;
+$(listen6 80 default_server)
     server_name $SERVER_NAME;
 
     client_max_body_size 1m;
@@ -281,7 +344,7 @@ if [[ $ADMIN_PUBLIC == y ]]; then
 # 어드민 (외부 공개를 선택한 경우에만)
 server {
     listen $((ADMIN_PORT + 1000));
-    listen [::]:$((ADMIN_PORT + 1000));
+$(listen6 $((ADMIN_PORT + 1000)))
     server_name $SERVER_NAME;
     server_tokens off;
     location / {
