@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 import type { AccessAction } from '../access-log/access-log.service.js';
 
-const ACTIONS: AccessAction[] = ['search', 'view', 'outlook', 'schedule', 'create', 'update', 'delete'];
+const ACTIONS: AccessAction[] = ['search', 'view', 'outlook', 'schedule', 'report'];
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export class LogRangeDto {

@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-export type AccessAction = 'search' | 'view' | 'outlook' | 'schedule' | 'create' | 'update' | 'delete';
+export type AccessAction = 'search' | 'view' | 'outlook' | 'schedule' | 'report';
 
 export interface AccessLogEntry {
   at: string;

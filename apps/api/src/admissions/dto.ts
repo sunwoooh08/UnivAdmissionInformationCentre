@@ -1,77 +1,6 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
-import { CATEGORIES, type Category } from '@susi/shared';
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
-const DATE_MSG = '날짜는 YYYY-MM-DD 또는 YYYY-MM-DDTHH:mm 형식이어야 합니다.';
-
-export class HistoryYearDto {
-  @IsInt() @Min(2000) @Max(2100)
-  year: number;
-
-  @IsInt() @Min(1) @Max(5000)
-  quota: number;
-
-  @IsInt() @Min(0) @Max(10000)
-  filled: number;
-}
-
-export class ScheduleDto {
-  @IsOptional() @Matches(DATE_RE, { message: DATE_MSG })
-  first: string | null;
-
-  @IsOptional() @IsArray() @ArrayMinSize(2) @ArrayMaxSize(2) @Matches(DATE_RE, { each: true, message: DATE_MSG })
-  exam: [string, string] | null;
-
-  @Matches(DATE_RE, { message: DATE_MSG })
-  final: string;
-
-  @IsOptional() @IsArray() @ArrayMinSize(2) @ArrayMaxSize(2) @Matches(DATE_RE, { each: true, message: DATE_MSG })
-  register?: [string, string] | null;
-
-  @IsOptional() @Matches(DATE_RE, { message: DATE_MSG })
-  waitlistEnd?: string | null;
-
-  @IsOptional() @Matches(DATE_RE, { message: DATE_MSG })
-  waitlistRegEnd?: string | null;
-}
-
-export class AdmissionInputDto {
-  @IsString() @MinLength(1) @MaxLength(60)
-  univ: string;
-
-  @IsString() @MinLength(1) @MaxLength(80)
-  track: string;
-
-  @IsIn(CATEGORIES as Category[])
-  category: Category;
-
-  @IsString() @MinLength(1) @MaxLength(80)
-  dept: string;
-
-  @IsInt() @Min(1) @Max(5000)
-  quota: number;
-
-  @ValidateNested() @Type(() => ScheduleDto)
-  schedule: ScheduleDto;
-
-  @IsArray() @ArrayMaxSize(5) @ValidateNested({ each: true }) @Type(() => HistoryYearDto)
-  history: HistoryYearDto[];
-}
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { CATEGORIES, type AdmissionDraft, type Category, type IngestOutcome } from '@susi/shared';
 
 export class SearchQueryDto {
   @IsOptional() @IsString() @MaxLength(100)
@@ -84,4 +13,43 @@ export class SearchQueryDto {
 export class OutlookQueryDto {
   @Type(() => Number) @IsInt() @Min(1) @Max(10000)
   rank: number;
+}
+
+/** 수집기 → API. 각 항목의 내용 검증은 @susi/shared 의 규칙이 맡는다. */
+export class IngestDto {
+  @IsString() @Matches(/^[a-z0-9][a-z0-9._-]{1,62}$/)
+  collector: string;
+
+  @IsArray() @ArrayMaxSize(5000)
+  drafts: AdmissionDraft[];
+}
+
+export class IngestLogQueryDto {
+  @IsOptional() @IsString() @MaxLength(40)
+  runId?: string;
+
+  @IsOptional() @IsIn(['created', 'updated', 'unchanged', 'pending', 'rejected'])
+  outcome?: IngestOutcome;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(1000)
+  limit?: number;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
+  offset?: number;
+}
+
+export class AdminListQueryDto {
+  @IsOptional() @IsString() @MaxLength(100)
+  q?: string;
+
+  @IsOptional() @IsIn(['published', 'pending', 'hidden'])
+  state?: 'published' | 'pending' | 'hidden';
+}
+
+export class ReportDto {
+  @IsString() @MinLength(1) @MaxLength(40)
+  admissionId: string;
+
+  @IsString() @MinLength(5) @MaxLength(1000)
+  message: string;
 }

@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { AdmissionsService } from './admissions.service.js';
-import { AdmissionInputDto, OutlookQueryDto, SearchQueryDto } from './dto.js';
+import { OutlookQueryDto, SearchQueryDto } from './dto.js';
 
 @Controller('admissions')
 export class AdmissionsController {
@@ -21,21 +21,5 @@ export class AdmissionsController {
     const result = this.admissions.outlook(id, query.rank);
     if (!result) throw new NotFoundException('충원 이력이 없어 계산할 수 없습니다.');
     return result;
-  }
-
-  @Post()
-  create(@Body() body: AdmissionInputDto) {
-    return this.admissions.create(body);
-  }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() body: AdmissionInputDto) {
-    return this.admissions.update(id, body);
-  }
-
-  @Delete(':id')
-  @HttpCode(204)
-  async remove(@Param('id') id: string) {
-    await this.admissions.remove(id);
   }
 }
