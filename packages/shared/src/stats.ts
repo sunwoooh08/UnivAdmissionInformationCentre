@@ -12,8 +12,18 @@ export function normalCdf(z: number): number {
   return z >= 0 ? 0.5 * (1 + erf) : 0.5 * (1 - erf);
 }
 
-export function fillRate(h: HistoryYear): number {
-  return h.quota > 0 ? h.filled / h.quota : 0;
+/** 충원율. 그 해 모집인원이 공개되지 않았으면 null */
+export function fillRate(h: HistoryYear): number | null {
+  return h.quota && h.quota > 0 ? h.filled / h.quota : null;
+}
+
+/**
+ * 그 해 충원인원을 올해 모집인원 규모로 환산한다.
+ * 둘 중 하나라도 모르면 그 해 충원인원을 그대로 쓴다.
+ */
+export function scaledFilled(h: HistoryYear, quota: number | null): number {
+  const rate = fillRate(h);
+  return rate !== null && quota ? rate * quota : h.filled;
 }
 
 export function sortHistory(history: HistoryYear[]): HistoryYear[] {
@@ -33,12 +43,12 @@ export function bandOf(p: number): Band {
  * - 퍼짐: 연도별 환산 충원인원의 가중 표준편차. 3개년으로는 변동을 과소평가하기 쉬우므로
  *         평균의 20% 또는 1명 중 큰 값을 하한으로 둔다. 1개년뿐이면 평균의 35%.
  */
-export function estimateFilled(quota: number, history: HistoryYear[]): { mean: number; spread: number } | null {
-  const hs = sortHistory(history).filter((h) => h.quota > 0).slice(0, YEAR_WEIGHTS.length);
-  if (hs.length === 0 || quota <= 0) return null;
+export function estimateFilled(quota: number | null, history: HistoryYear[]): { mean: number; spread: number } | null {
+  const hs = sortHistory(history).slice(0, YEAR_WEIGHTS.length);
+  if (hs.length === 0) return null;
   const w = YEAR_WEIGHTS.slice(0, hs.length);
   const wSum = w.reduce((a, b) => a + b, 0);
-  const scaled = hs.map((h) => fillRate(h) * quota);
+  const scaled = hs.map((h) => scaledFilled(h, quota));
   const mean = scaled.reduce((acc, v, i) => acc + v * (w[i] ?? 0), 0) / wSum;
   if (hs.length === 1) return { mean, spread: Math.max(mean * 0.35, 1.5) };
   const variance = scaled.reduce((acc, v, i) => acc + (w[i] ?? 0) * (v - mean) ** 2, 0) / wSum;
@@ -62,13 +72,10 @@ export function computeOutlook(admission: Pick<Admission, 'quota' | 'history'>, 
     rank: i + 1,
     probability: passProbability(i + 1, est.mean, est.spread),
   }));
-  const byYear = sortHistory(admission.history)
-    .filter((h) => h.quota > 0)
-    .map((h) => {
-      const rate = fillRate(h);
-      const scaledFilled = Math.round(rate * admission.quota);
-      return { year: h.year, filled: h.filled, scaledFilled, rate, passed: r <= scaledFilled };
-    });
+  const byYear = sortHistory(admission.history).map((h) => {
+    const scaled = Math.round(scaledFilled(h, admission.quota));
+    return { year: h.year, filled: h.filled, scaledFilled: scaled, rate: fillRate(h), passed: r <= scaled };
+  });
   return {
     rank: r,
     probability,

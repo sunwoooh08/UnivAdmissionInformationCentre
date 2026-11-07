@@ -64,7 +64,7 @@ export function admissionEvents(a: Admission, common: CommonSchedule): TimelineE
   const events: TimelineEvent[] = [];
   if (s.first) events.push({ kind: 'first', label: EVENT_LABELS.first, start: s.first, end: s.first });
   if (s.exam) events.push({ kind: 'exam', label: EVENT_LABELS.exam, start: s.exam[0], end: s.exam[1] });
-  events.push({ kind: 'final', label: EVENT_LABELS.final, start: s.final, end: s.final });
+  if (s.final) events.push({ kind: 'final', label: EVENT_LABELS.final, start: s.final, end: s.final });
   events.push({ kind: 'register', label: EVENT_LABELS.register, start: register[0], end: register[1] });
   events.push({ kind: 'waitlist', label: EVENT_LABELS.waitlist, start: waitlistStart, end: waitlistEnd });
   events.push({ kind: 'waitlistReg', label: EVENT_LABELS.waitlistReg, start: waitlistRegEnd, end: waitlistRegEnd });

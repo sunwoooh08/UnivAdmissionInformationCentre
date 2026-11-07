@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { admissionKey, describeChanges, mergeDraft, missingForPublish, RULES_2027, validateDraft, validateMerged } from './ingest.js';
+import { admissionKey, describeChanges, inferCategory, mergeDraft, missingForPublish, RULES_2027, validateDraft, validateMerged } from './ingest.js';
 import type { AdmissionDraft } from './types.js';
 
 const src = [{ label: '2027 수시모집요강', url: 'https://example.ac.kr/a.pdf', checkedAt: '2026-11-08' }];
@@ -36,9 +36,32 @@ test('history keeps the latest three years', () => {
   assert.deepEqual(m.history.map((h) => h.year), [2025, 2024, 2023]);
 });
 
-test('missing fields keep the item unpublished', () => {
-  const m = mergeDraft(null, { ...base, history: [{ year: 2026, quota: 10, filled: 3 }] });
-  assert.ok(missingForPublish(m).includes('최초합격 발표일'));
+test('partial publish: history alone is enough once the category is known', () => {
+  const noCategory = mergeDraft(null, { ...base, history: [{ year: 2026, quota: 10, filled: 3 }] });
+  assert.deepEqual(missingForPublish(noCategory), ['전형 유형']);
+  const withCategory = mergeDraft(noCategory, { ...base, category: '학생부종합' });
+  assert.deepEqual(missingForPublish(withCategory), []);
+  const empty = mergeDraft(null, { ...base, category: '학생부종합' });
+  assert.ok(missingForPublish(empty).some((m) => m.includes('충원 이력')));
+});
+
+test('history quota may be unknown', () => {
+  const errs = validateDraft({ ...base, history: [{ year: 2026, quota: null, filled: 40 }] }, null, RULES_2027);
+  assert.deepEqual(errs, []);
+});
+
+test('a big jump in filled count for the same year is rejected', () => {
+  const stored = mergeDraft(null, { ...base, history: [{ year: 2026, quota: 20, filled: 10 }] });
+  const errs = validateDraft({ ...base, history: [{ year: 2026, quota: 20, filled: 95 }] }, stored, RULES_2027);
+  assert.ok(errs.some((e) => e.includes('충원인원이 기존 값')));
+});
+
+test('category inference from track names', () => {
+  assert.equal(inferCategory('학생부교과(추천형)'), '학생부교과');
+  assert.equal(inferCategory('학생부종합(활동우수형)'), '학생부종합');
+  assert.equal(inferCategory('논술우수자'), '논술');
+  assert.equal(inferCategory('학교장추천인재'), '학생부교과');
+  assert.equal(inferCategory('실기(연극학부)'), '실기/실적');
 });
 
 test('validation rejects implausible values', () => {

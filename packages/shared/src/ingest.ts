@@ -39,6 +39,8 @@ const MAX_HISTORY = 3;
 const MAX_QUOTA = 2000;
 /** 충원인원이 모집인원의 이 배수를 넘으면 오류로 본다 */
 const MAX_FILL_RATIO = 10;
+/** 모집인원을 모를 때 충원인원 상한 */
+const MAX_FILLED = 2000;
 
 function norm(s: string): string {
   return s.normalize('NFC').replace(/\s+/g, '').toLowerCase();
@@ -115,8 +117,8 @@ export function validateDraft(draft: AdmissionDraft, base: WorkingAdmission | nu
 
   for (const h of draft.history ?? []) {
     if (!isInt(h.year, 2015, rules.cycleYear - 1)) errors.push(`입시결과 학년도가 비정상입니다: ${h.year}`);
-    if (!isInt(h.quota, 1, MAX_QUOTA)) errors.push(`${h.year} 모집인원이 비정상입니다: ${h.quota}`);
-    if (!isInt(h.filled, 0, MAX_QUOTA * MAX_FILL_RATIO)) errors.push(`${h.year} 충원인원이 비정상입니다: ${h.filled}`);
+    if (h.quota !== null && !isInt(h.quota, 1, MAX_QUOTA)) errors.push(`${h.year} 모집인원이 비정상입니다: ${h.quota}`);
+    if (!isInt(h.filled, 0, MAX_FILLED)) errors.push(`${h.year} 충원인원이 비정상입니다: ${h.filled}`);
     else if (isInt(h.quota, 1, MAX_QUOTA) && h.filled > h.quota * MAX_FILL_RATIO)
       errors.push(`${h.year} 충원인원(${h.filled})이 모집인원(${h.quota})의 ${MAX_FILL_RATIO}배를 넘습니다.`);
   }
@@ -144,8 +146,10 @@ export function validateDraft(draft: AdmissionDraft, base: WorkingAdmission | nu
   // 같은 학년도 값이 기존과 크게 다르면 표를 잘못 읽었을 가능성이 높다
   for (const h of draft.history ?? []) {
     const prev = base?.history.find((x) => x.year === h.year);
-    if (prev && prev.quota !== h.quota && Math.abs(prev.quota - h.quota) > Math.max(3, prev.quota * 0.5))
+    if (prev?.quota && h.quota && Math.abs(prev.quota - h.quota) > Math.max(3, prev.quota * 0.5))
       errors.push(`${h.year} 모집인원이 기존 값(${prev.quota})과 크게 다릅니다: ${h.quota}`);
+    if (prev && Math.abs(prev.filled - h.filled) > Math.max(10, prev.filled * 2))
+      errors.push(`${h.year} 충원인원이 기존 값(${prev.filled})과 크게 다릅니다: ${h.filled}`);
   }
   return errors;
 }
@@ -165,15 +169,25 @@ export function validateMerged(m: WorkingAdmission): string[] {
   return errors;
 }
 
-/** 사이트에 공개하는 데 필요한 값이 다 있는지. 빈 항목 이름을 돌려준다. */
+/**
+ * 사이트에 공개하는 데 필요한 값이 다 있는지. 빈 항목 이름을 돌려준다.
+ * 일정이나 충원 이력 중 하나만 있어도 공개한다 (부분 공개).
+ */
 export function missingForPublish(m: WorkingAdmission): string[] {
   const missing: string[] = [];
   if (!m.category) missing.push('전형 유형');
-  if (!m.quota) missing.push('모집인원');
-  if (!m.schedule.final) missing.push('최초합격 발표일');
-  if (m.schedule.first === undefined) missing.push('1단계 발표 여부');
-  if (m.schedule.exam === undefined) missing.push('면접·고사 여부');
+  if (!m.schedule.final && m.history.length === 0) missing.push('최초합격 발표일 또는 충원 이력');
   return missing;
+}
+
+/** 전형명으로 전형 유형을 추정한다 */
+export function inferCategory(track: string): Category {
+  const t = track.replace(/\s+/g, '');
+  if (/논술/.test(t)) return '논술';
+  if (/교과|추천|지역균형|학교장/.test(t) && !/종합/.test(t)) return '학생부교과';
+  if (/실기|실적|특기|예체능|체육/.test(t)) return '실기/실적';
+  if (/종합|활동|면접|서류|인재|기회균형|농어촌|특성화|국제/.test(t)) return '학생부종합';
+  return '기타';
 }
 
 /** 두 상태를 비교해 바뀐 항목을 사람이 읽을 수 있게 요약 */

@@ -10,8 +10,8 @@ export interface AdmissionSchedule {
   first: DateString | null;
   /** 면접·논술 등 대학별고사 [시작, 종료] */
   exam: [DateString, DateString] | null;
-  /** 최초합격자 발표 */
-  final: DateString;
+  /** 최초합격자 발표 (아직 모집요강에서 확인하지 못했으면 null) */
+  final: DateString | null;
   /** 최초합격자 등록 기간. 생략 시 공통 일정 사용 */
   register?: [DateString, DateString] | null;
   /** 충원합격 통보 마감. 생략 시 공통 일정 사용 */
@@ -23,9 +23,9 @@ export interface AdmissionSchedule {
 export interface HistoryYear {
   /** 학년도 (예: 2026) */
   year: number;
-  /** 모집인원 */
-  quota: number;
-  /** 충원인원 (추가합격 인원) */
+  /** 그 해 모집인원 (대학이 공개하지 않았으면 null) */
+  quota: number | null;
+  /** 충원인원 (추가합격 인원 또는 충원합격 마지막 순위) */
   filled: number;
 }
 
@@ -35,8 +35,8 @@ export interface Admission {
   track: string;
   category: Category;
   dept: string;
-  /** 올해 모집인원 */
-  quota: number;
+  /** 올해 모집인원 (아직 확인하지 못했으면 null) */
+  quota: number | null;
   schedule: AdmissionSchedule;
   /** 최근 연도부터 최대 3개년 */
   history: HistoryYear[];
@@ -146,5 +146,38 @@ export interface Outlook {
   /** 예비번호별 확률 곡선 */
   curve: { rank: number; probability: number }[];
   /** 연도별로 그 해 충원인원이었다면 합격했는지 */
-  byYear: { year: number; filled: number; scaledFilled: number; rate: number; passed: boolean }[];
+  byYear: { year: number; filled: number; scaledFilled: number; rate: number | null; passed: boolean }[];
+}
+
+/** 대학별 수집 상태 */
+export type CoverageStatus =
+  | 'ok'
+  | 'partial'
+  | 'error'
+  | 'robots-blocked'
+  | 'restricted'
+  | 'no-official-data'
+  | 'needs-ocr'
+  | 'unconfigured';
+
+export interface CoverageSource {
+  label: string;
+  url: string;
+  ok: boolean;
+  rows: number;
+  /** 모집단위와 숫자는 있었지만 형식이 맞지 않아 버린 줄 수 */
+  unmatched: number;
+  error?: string;
+}
+
+export interface CoverageEntry {
+  univId: string;
+  name: string;
+  region: string;
+  status: CoverageStatus;
+  message: string | null;
+  admissionSite: string | null;
+  sources: CoverageSource[];
+  drafts: number;
+  checkedAt: string;
 }
