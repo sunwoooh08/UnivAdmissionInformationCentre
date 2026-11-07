@@ -8,3 +8,4 @@ out/
 apps/api/data/
 .DS_Store
 npm-debug.log*
+next-env.d.ts
