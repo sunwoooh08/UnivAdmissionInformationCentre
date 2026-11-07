@@ -42,6 +42,18 @@ const MIGRATIONS: string[] = [
      created_at TEXT NOT NULL,
      resolved_at TEXT
    );`,
+  `CREATE TABLE coverage (
+     univ_id TEXT PRIMARY KEY,
+     name TEXT NOT NULL,
+     region TEXT NOT NULL,
+     status TEXT NOT NULL,
+     message TEXT,
+     admission_site TEXT,
+     sources TEXT NOT NULL,
+     drafts INTEGER NOT NULL,
+     checked_at TEXT NOT NULL,
+     last_ok_at TEXT
+   );`,
 ];
 
 /** DATA_DIR/uaic.db (SQLite). 시작할 때 필요한 마이그레이션을 적용한다. */

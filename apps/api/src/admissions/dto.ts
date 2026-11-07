@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
-import { CATEGORIES, type AdmissionDraft, type Category, type IngestOutcome } from '@susi/shared';
+import { CATEGORIES, type AdmissionDraft, type Category, type CoverageEntry, type IngestOutcome } from '@susi/shared';
 
 export class SearchQueryDto {
   @IsOptional() @IsString() @MaxLength(100)
@@ -52,4 +52,9 @@ export class ReportDto {
 
   @IsString() @MinLength(5) @MaxLength(1000)
   message: string;
+}
+
+export class CoverageDto {
+  @IsArray() @ArrayMaxSize(1000)
+  entries: CoverageEntry[];
 }

@@ -11,6 +11,12 @@ export class AdmissionsController {
     return this.admissions.search(query.q, query.category);
   }
 
+  /** 공개 중인 대학 수·모집단위 수 */
+  @Get('stats')
+  stats() {
+    return this.admissions.stats();
+  }
+
   @Get(':id')
   get(@Param('id') id: string) {
     return this.admissions.get(id);

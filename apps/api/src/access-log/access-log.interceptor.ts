@@ -47,6 +47,7 @@ function classify(method: string, path: string): AccessAction | null {
   if (path === '/api/reports' && method === 'POST') return 'report';
   if (!path.startsWith('/api/admissions') || method !== 'GET') return null;
   if (path.endsWith('/outlook')) return 'outlook';
+  if (path === '/api/admissions/stats') return null;
   return path === '/api/admissions' ? 'search' : 'view';
 }
 

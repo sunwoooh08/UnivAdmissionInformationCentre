@@ -54,11 +54,11 @@ function toAdmission(row: Row): Admission {
     track: w.track,
     dept: w.dept,
     category: w.category as Category,
-    quota: w.quota as number,
+    quota: w.quota ?? null,
     schedule: {
       first: w.schedule.first ?? null,
       exam: w.schedule.exam ?? null,
-      final: w.schedule.final as string,
+      final: w.schedule.final ?? null,
       register: w.schedule.register ?? null,
       waitlistEnd: w.schedule.waitlistEnd ?? null,
       waitlistRegEnd: w.schedule.waitlistRegEnd ?? null,
@@ -92,13 +92,20 @@ export class AdmissionsService {
     return this.cache;
   }
 
-  search(q?: string, category?: Category): Admission[] {
+  /** 검색. 검색어도 유형도 없으면 빈 목록 (전체 목록을 한 번에 내려보내지 않는다) */
+  search(q?: string, category?: Category, limit = 100): Admission[] {
     const terms = (q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length === 0 && !category) return [];
     return this.all().filter((a) => {
       if (category && a.category !== category) return false;
       const hay = `${a.univ} ${a.track} ${a.category} ${a.dept}`.toLowerCase();
       return terms.every((t) => hay.includes(t));
-    });
+    }).slice(0, limit);
+  }
+
+  stats() {
+    const all = this.all();
+    return { universities: new Set(all.map((a) => a.univ)).size, admissions: all.length };
   }
 
   get(admissionId: string): Admission {

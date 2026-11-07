@@ -3,6 +3,8 @@ import { AccessLogService } from '../access-log/access-log.service.js';
 import { AdmissionsService } from '../admissions/admissions.service.js';
 import { AdminListQueryDto, IngestDto, IngestLogQueryDto } from '../admissions/dto.js';
 import { ReportsService } from '../reports/reports.service.js';
+import { CoverageService } from '../coverage/coverage.service.js';
+import { CoverageDto } from '../admissions/dto.js';
 import { AdminGuard } from './admin.guard.js';
 import { LogQueryDto, LogRangeDto } from './admin.dto.js';
 
@@ -13,6 +15,7 @@ export class AdminController {
     private readonly log: AccessLogService,
     private readonly admissions: AdmissionsService,
     private readonly reports: ReportsService,
+    private readonly coverage: CoverageService,
   ) {}
 
   /** 토큰 확인용 */
@@ -38,6 +41,17 @@ export class AdminController {
   ingest(@Body() body: IngestDto) {
     const summary = this.admissions.ingest(body.collector, body.drafts);
     return { runId: summary.runId, counts: summary.counts };
+  }
+
+  /** 수집기가 실행마다 전체 대학의 상태를 보낸다 */
+  @Post('coverage')
+  saveCoverage(@Body() body: CoverageDto) {
+    return this.coverage.save(body.entries);
+  }
+
+  @Get('coverage')
+  listCoverage() {
+    return this.coverage.list();
   }
 
   @Get('ingest/runs')
