@@ -40,11 +40,71 @@ export interface Admission {
   schedule: AdmissionSchedule;
   /** 최근 연도부터 최대 3개년 */
   history: HistoryYear[];
-  /** true면 화면 예시용 가상 데이터 */
-  sample: boolean;
+  /** 각 값의 근거가 된 대학 공식 자료 */
+  sources: Source[];
+  /** 마지막으로 검수·반영된 시각 (ISO) */
+  updatedAt: string;
 }
 
-export type AdmissionInput = Omit<Admission, 'id' | 'sample'>;
+/** 출처: 대학이 직접 게시한 모집요강·입시결과 등 */
+export interface Source {
+  label: string;
+  url: string;
+  /** 출처를 확인한 날짜 */
+  checkedAt: DateString;
+}
+
+/** 지원 정보 본문 (식별자·메타 제외) */
+export type AdmissionInput = Omit<Admission, 'id' | 'sources' | 'updatedAt'>;
+
+/**
+ * 수집기가 보내는 변경. 모집요강 수집기는 일정·모집인원만,
+ * 입시결과 수집기는 충원 이력만 채우는 식으로 일부만 담을 수 있다.
+ * (대학, 전형, 모집단위)가 같은 기존 항목에 합쳐진다.
+ */
+export interface AdmissionDraft {
+  univ: string;
+  track: string;
+  dept: string;
+  category?: Category;
+  quota?: number;
+  schedule?: Partial<AdmissionSchedule>;
+  history?: HistoryYear[];
+  sources: Source[];
+}
+
+/** 수집 결과 한 건이 어떻게 처리됐는지 */
+export type IngestOutcome = 'created' | 'updated' | 'unchanged' | 'pending' | 'rejected';
+
+export interface IngestLogEntry {
+  id: string;
+  runId: string;
+  collector: string;
+  at: string;
+  key: string;
+  admissionId: string | null;
+  outcome: IngestOutcome;
+  /** 반영되지 않은 이유 또는 바뀐 항목 요약 */
+  messages: string[];
+}
+
+export interface IngestSummary {
+  runId: string;
+  counts: Record<IngestOutcome, number>;
+  entries: IngestLogEntry[];
+}
+
+export type ReportStatus = 'open' | 'resolved';
+
+/** 이용자 오류 제보 */
+export interface Report {
+  id: string;
+  admissionId: string;
+  message: string;
+  status: ReportStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+}
 
 export interface CommonScheduleItem {
   key: string;

@@ -67,7 +67,7 @@ test('admissionEvents fills defaults and sorts', () => {
     defaults: { register: ['2026-12-21', '2026-12-23'], waitlistEnd: '2026-12-29T21:00', waitlistRegEnd: '2026-12-30T22:00' },
   };
   const a: Admission = {
-    id: 'x', univ: 'u', track: 't', category: '학생부종합', dept: 'd', quota: 5, sample: false,
+    id: 'x', univ: 'u', track: 't', category: '학생부종합', dept: 'd', quota: 5, sources: [], updatedAt: '2026-11-08T00:00:00Z',
     schedule: { first: '2026-11-13', exam: ['2026-11-21', '2026-11-22'], final: '2026-12-12' },
     history: [],
   };
