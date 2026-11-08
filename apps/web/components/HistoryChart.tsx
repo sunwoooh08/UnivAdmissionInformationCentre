@@ -32,13 +32,11 @@ export function HistoryChart({ history }: { history: HistoryYear[] }) {
           const cx = PAD.left + groupW * i + groupW / 2;
           return (
             <g key={h.year}>
-              {h.quota !== null ? (
+              {h.quota !== null && (
                 <>
                   <rect x={cx - barW - 2} y={y(h.quota)} width={barW} height={y(0) - y(h.quota)} fill="var(--bar)" />
                   <text x={cx - barW / 2 - 2} y={y(h.quota) - 5} textAnchor="middle">{h.quota}</text>
                 </>
-              ) : (
-                <text x={cx - barW / 2 - 2} y={y(0) - 5} textAnchor="middle">?</text>
               )}
               <rect x={cx + 2} y={y(h.filled)} width={barW} height={y(0) - y(h.filled)} fill="var(--ink)" />
               <text x={cx + barW / 2 + 2} y={y(h.filled) - 5} textAnchor="middle" style={{ fill: 'var(--ink)', fontWeight: 600 }}>

@@ -143,7 +143,7 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
                   {history.map((h) => (
                     <tr key={h.year}>
                       <td>{h.year}</td>
-                      <td className="num">{h.quota ?? '미공개'}</td>
+                      <td className="num">{h.quota ?? <span className="muted">미공개</span>}</td>
                       <td className="num">{h.filled}</td>
                       <td className="num">{rateText(fillRate(h))}</td>
                       <td className="num">{Math.round(scaledFilled(h, admission.quota))}명</td>
