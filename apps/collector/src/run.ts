@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { todayKST, type CoverageEntry, type IngestOutcome } from '@susi/shared';
 import { collectUniversity } from './collect.js';
-import { CONFIG_BY_ID, CONFIGS } from './configs/index.js';
+import { CONFIG_BY_ID, CONFIG_ERRORS, CONFIGS } from './configs/index.js';
 import { PoliteFetcher } from './http.js';
 import { pdfToText } from './pdf.js';
 import { UNIVERSITIES } from './registry/index.js';
@@ -39,8 +39,9 @@ async function post(path: string, body: unknown) {
 }
 
 async function main() {
+  for (const e of CONFIG_ERRORS) console.error(`설정 파일 오류 ${e.file}: ${e.error}`);
   const unknown = CONFIGS.filter((c) => !UNIVERSITIES.some((u) => u.id === c.id)).map((c) => c.id);
-  if (unknown.length) throw new Error(`대학 목록에 없는 설정: ${unknown.join(', ')}`);
+  if (unknown.length) console.error(`대학 목록에 없는 설정은 무시: ${unknown.join(', ')}`);
 
   if (flag('--list')) {
     for (const u of UNIVERSITIES) {

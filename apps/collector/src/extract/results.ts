@@ -14,9 +14,17 @@ export interface ResultsSpec {
   section: RegExp;
   /**
    * 모집단위 뒤 숫자 부분(칸 사이 공백은 한 칸으로 정리됨)에 맞출 패턴. 처음 맞는 것을 쓴다.
-   * 이름 그룹: quotaYYYY(모집인원), filledYYYY(충원인원·충원합격순위), rateYYYY(충원율 %)
+   * 이름 그룹:
+   *   quotaYYYY(그 해 모집인원), filledYYYY(충원인원·충원합격순위), rateYYYY(충원율 %)
+   *   quotaNow(올해 모집인원 — 모집요강 표)
+   *   m0, m1, …(행렬 표: matrix 에 적은 전형 순서대로 그 전형의 올해 모집인원)
    */
   rows: { tracks?: RegExp; pattern: RegExp }[];
+  /**
+   * 행렬 표(행=모집단위, 열=전형)일 때 열 순서대로의 전형명. 행 패턴의 m0, m1 … 그룹과 짝을 이룬다.
+   * '-' 이거나 0 인 칸은 그 전형에서 뽑지 않는 것으로 본다.
+   */
+  matrix?: string[];
   /** 모집단위로 보지 않을 칸 (합계 등) */
   skipDept?: RegExp;
   /** 전형명 정리 */
@@ -41,6 +49,8 @@ export interface ExtractedRow {
   category: Category;
   dept: string;
   history: HistoryYear[];
+  /** 올해 모집인원 (모집요강) */
+  currentQuota?: number;
 }
 
 export interface ExtractResult {
@@ -73,7 +83,12 @@ function cleanTrack(s: string): string {
 }
 
 function cleanDept(s: string): string {
-  return s.normalize('NFC').replace(/\s+/g, ' ').replace(/[\d)]+\)$/, '').trim();
+  return s
+    .normalize('NFC')
+    .replace(/\s+/g, ' ')
+    .replace(/[\d)]+\)$/, '') // 각주 번호 1) 2)
+    .replace(/[†‡*※◆◇●○■□▲△]+$/u, '') // 표시 기호
+    .trim();
 }
 
 function toInt(s: string | undefined): number | null {
@@ -172,12 +187,29 @@ export function extractResults(text: string, spec: ResultsSpec): ExtractResult {
       const rest = cells.slice(k).join(' ').replace(/\s+/g, ' ');
       const rule = spec.rows.find((r) => (!r.tracks || r.tracks.test(panel.track ?? '')) && r.pattern.test(rest));
       const groups = rule ? (rest.match(rule.pattern)?.groups ?? {}) : null;
-      const history = groups ? historyFrom(groups) : [];
-      if (!groups || history.length === 0) {
-        if (!groups) unmatched.push({ track: panel.track, line: segment.trim() });
+      if (!groups) {
+        unmatched.push({ track: panel.track, line: segment.trim() });
         return;
       }
-      rows.push({ track: panel.track, category: panel.category ?? inferCategory(panel.track), dept, history });
+      if (spec.matrix) {
+        // 행렬 표: 열마다 다른 전형
+        spec.matrix.forEach((track, idx) => {
+          const n = toInt(groups[`m${idx}`]);
+          if (!track || n === null || n <= 0) return;
+          rows.push({ track, category: inferCategory(track), dept, history: [], currentQuota: n });
+        });
+        return;
+      }
+      const history = historyFrom(groups);
+      const currentQuota = toInt(groups.quotaNow) ?? undefined;
+      if (history.length === 0 && currentQuota === undefined) return;
+      rows.push({
+        track: panel.track,
+        category: panel.category ?? inferCategory(panel.track),
+        dept,
+        history,
+        ...(currentQuota !== undefined && currentQuota > 0 ? { currentQuota } : {}),
+      });
     });
   }
   return { rows: dedupe(rows), unmatched };
