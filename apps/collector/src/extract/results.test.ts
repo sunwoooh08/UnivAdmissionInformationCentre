@@ -166,7 +166,8 @@ test('every active config has a source and valid specs', () => {
     assert.ok(c.results?.length || c.guide, `${id}: 입시결과도 모집요강도 없음`);
     for (const r of c.results ?? []) {
       assert.ok(r.years.length > 0, `${id}: years`);
-      assert.ok(r.spec.section.flags.includes('g'), `${id}: section g flag`);
+      assert.ok(r.spec || r.positioned?.length, `${id}: spec 또는 positioned 필요`);
+      if (r.spec) assert.ok(r.spec.section.flags.includes('g'), `${id}: section g flag`);
       assert.ok(/^https:\/\//.test(r.url), `${id}: https`);
     }
   }

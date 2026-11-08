@@ -132,8 +132,14 @@ export async function collectUniversity(univ: University, config: UniversityConf
 
   // 1) 입시결과: 지난 학년도 모집인원·충원
   for (const src of config.results ?? []) {
-    await handle(src.label, src.url, ({ text }, report) => {
-      const { rows, unmatched } = extract(text, src.spec);
+    await handle(src.label, src.url, async (pdf, report) => {
+      const parts = src.spec ? [extract(pdf.text, src.spec)] : [];
+      for (const spec of src.positioned ?? []) {
+        const r = extractPositionedMatrix(await pdf.words(), spec);
+        parts.push({ rows: r.rows, unmatched: r.unmatched.length });
+      }
+      const rows = parts.flatMap((p) => p.rows);
+      const unmatched = parts.reduce((n, p) => n + p.unmatched, 0);
       report.unmatched = unmatched;
       const source: Source = { label: src.label, url: src.url, checkedAt: ctx.today };
       for (const row of rows) {

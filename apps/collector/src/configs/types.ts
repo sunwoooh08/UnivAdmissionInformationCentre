@@ -22,7 +22,10 @@ export interface ResultsSource {
   format: 'pdf';
   /** 이 파일에 기대하는 학년도 (검증용) */
   years: number[];
-  spec: ResultsSpec;
+  /** 글자 배치로 읽는 표 */
+  spec?: ResultsSpec;
+  /** 빈 칸이 있는 '모집단위 × 전형' 충원 표를 PDF 좌표로 읽기 (field: 'filled', year 지정) */
+  positioned?: PositionedMatrixSpec[];
 }
 
 /** 모집요강에서 확인한 전형 일정. 날짜는 YYYY-MM-DD 또는 YYYY-MM-DDTHH:mm */

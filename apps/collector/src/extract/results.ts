@@ -77,7 +77,7 @@ const DEFAULT_SKIP =
   /^(계|합계|소계|총계|전체|모집단위|단과대학|대학|학부|계열|구분|평균|비고|-)$|(^|\s)(계|합계|소계|총계)$|학년도|입학전형|입시결과|선발결과|전형결과|^(인문|자연|상경|예체능|예능|체능|통합|공학|의약|의학|사범|사회|인문사회|자연과학|인문\/자연|자연\/인문)$/;
 /** 수시 표가 끝나고 정시·수능 표가 시작되는 줄 */
 const DEFAULT_SECTION_END = /정시|수능\s*위주|수능\s*성적|수능전형|수능\s*\(/;
-const NUMERIC_CELL = /^[-–]$|^\d[\d,.]*(\s*:\s*1)?%?\*?$/;
+const NUMERIC_CELL = /^[-–]$|^\d[\d,.]*(\s*:\s*1)?%?\*?명?$/;
 
 function cleanTrack(s: string): string {
   return s
@@ -109,7 +109,7 @@ export function cleanDept(s: string): string {
 
 function toInt(s: string | undefined): number | null {
   if (s === undefined) return null;
-  const t = s.replace(/[,\s]/g, '').replace(/\*+$/, ''); // '10*' 같은 표시 기호
+  const t = s.replace(/[,\s]/g, '').replace(/\*+$/, '').replace(/명$/, ''); // '10*', '65명'
   return /^\d+$/.test(t) ? Number(t) : null;
 }
 

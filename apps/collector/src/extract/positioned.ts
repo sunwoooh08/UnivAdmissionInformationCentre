@@ -22,6 +22,12 @@ export interface PositionedMatrixSpec {
   tolerance?: number;
   /** 한 PDF 쪽에 두 쪽이 펼쳐져 있으면 true: 왼쪽 절반과 오른쪽 절반을 따로 읽는다 */
   pageHalves?: boolean;
+  /**
+   * 칸 값의 뜻. 기본 'quota'(올해 모집인원). 'filled' 이면 year 학년도의 충원인원(충원합격 순위)으로 읽는다
+   * (입시결과의 '모집단위 × 전형' 충원 표). 합계 열이 없는 표는 totalHeader 를 비워 둔다.
+   */
+  field?: 'quota' | 'filled';
+  year?: number;
 }
 
 interface Line {
@@ -54,6 +60,7 @@ function findHeader(words: PdfWord[], label: string): number | null {
 
 export function extractPositionedMatrix(pages: PdfPage[], spec: PositionedMatrixSpec): ExtractResult {
   if (spec.headers.length !== spec.matrix.length) throw new Error('headers 와 matrix 의 길이가 다릅니다.');
+  if (spec.field === 'filled' && !spec.year) throw new Error("field: 'filled' 에는 year 가 필요합니다.");
   const rows: ExtractedRow[] = [];
   const unmatched: ExtractResult['unmatched'] = [];
   const seen = new Set<string>();
@@ -191,11 +198,14 @@ export function extractPositionedMatrix(pages: PdfPage[], spec: PositionedMatrix
       const added: ExtractedRow[] = [];
       values.forEach((n, i) => {
         const track = spec.matrix[i];
-        if (!track || n === null || n <= 0) return;
+        if (!track || n === null || (n <= 0 && spec.field !== 'filled')) return;
         const key = `${track}|${dept}`;
         if (seen.has(key)) return;
         seen.add(key);
-        const row: ExtractedRow = { track, category: inferCategory(track), dept, history: [], currentQuota: n };
+        const row: ExtractedRow =
+          spec.field === 'filled'
+            ? { track, category: inferCategory(track), dept, history: [{ year: spec.year ?? 0, quota: null, filled: n }] }
+            : { track, category: inferCategory(track), dept, history: [], currentQuota: n };
         rows.push(row);
         added.push(row);
       });

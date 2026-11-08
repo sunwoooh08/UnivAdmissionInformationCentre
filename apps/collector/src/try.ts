@@ -22,10 +22,12 @@ if (!config) {
 let specs: ResultsSpec[] = [];
 let file: string | undefined;
 let years: number[] | null = null;
+let positionedResults: import('./extract/positioned.js').PositionedMatrixSpec[] = [];
 if (mode === '--results') {
   const src = config.results?.[Number(a)];
   if (!src) throw new Error(`results[${a}] 없음`);
-  specs = [src.spec];
+  specs = src.spec ? [src.spec] : [];
+  positionedResults = src.positioned ?? [];
   years = src.years;
   file = b;
 } else if (mode === '--guide') {
@@ -40,9 +42,8 @@ if (!file) throw new Error('PDF 파일 경로가 필요합니다.');
 const buf = readFileSync(file);
 const text = await pdfToText(buf);
 const runs: (() => Promise<ReturnType<typeof extractResults>>)[] = specs.map((spec) => async () => extractResults(text, spec));
-if (mode === '--guide') {
-  for (const spec of config.guide?.positionedQuotas ?? []) runs.push(async () => extractPositionedMatrix(await pdfToWords(buf), spec));
-}
+const positionedSpecs = mode === '--guide' ? (config.guide?.positionedQuotas ?? []) : positionedResults;
+for (const spec of positionedSpecs) runs.push(async () => extractPositionedMatrix(await pdfToWords(buf), spec));
 for (const [i, run] of runs.entries()) {
   const { rows, unmatched } = await run();
   const byTrack: Record<string, number> = {};
