@@ -39,7 +39,7 @@ export class AdminController {
   /** 수집기가 결과를 보낸다. 검증을 통과한 값은 바로 반영된다. */
   @Post('ingest')
   ingest(@Body() body: IngestDto) {
-    const summary = this.admissions.ingest(body.collector, body.drafts);
+    const summary = this.admissions.ingest(body.collector, body.drafts, body.complete === true);
     return { runId: summary.runId, counts: summary.counts };
   }
 

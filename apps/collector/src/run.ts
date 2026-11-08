@@ -70,7 +70,7 @@ async function main() {
   for (const univ of targets) {
     const config = CONFIG_BY_ID.get(univ.id);
     const log = (msg: string) => console.log(`[${univ.id}] ${msg}`);
-    const { drafts, coverage: cov } = await collectUniversity(univ, config, { fetcher, pdfToText, today, log });
+    const { drafts, coverage: cov, complete } = await collectUniversity(univ, config, { fetcher, pdfToText, today, log });
     coverage.push(cov);
     if (config?.status === 'active') log(`상태 ${cov.status}, ${drafts.length}건`);
     if (cov.status === 'error') failed++;
@@ -79,7 +79,7 @@ async function main() {
       console.log(JSON.stringify(drafts.slice(0, 5), null, 2));
       continue;
     }
-    const out = (await post('/ingest', { collector: `results.${univ.id}`, drafts })) as {
+    const out = (await post('/ingest', { collector: `results.${univ.id}`, drafts, complete })) as {
       runId: string;
       counts: Record<IngestOutcome, number>;
     };

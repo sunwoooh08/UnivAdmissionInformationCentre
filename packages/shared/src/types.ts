@@ -74,7 +74,7 @@ export interface AdmissionDraft {
 }
 
 /** 수집 결과 한 건이 어떻게 처리됐는지 */
-export type IngestOutcome = 'created' | 'updated' | 'unchanged' | 'pending' | 'rejected';
+export type IngestOutcome = 'created' | 'updated' | 'unchanged' | 'pending' | 'rejected' | 'retired';
 
 export interface IngestLogEntry {
   id: string;

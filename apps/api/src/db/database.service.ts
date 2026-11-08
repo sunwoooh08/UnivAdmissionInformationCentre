@@ -54,6 +54,9 @@ const MIGRATIONS: string[] = [
      checked_at TEXT NOT NULL,
      last_ok_at TEXT
    );`,
+  // 수집기별로 마지막으로 본 시각: 전체 수집에서 빠진 항목을 내리기 위해
+  `ALTER TABLE admissions ADD COLUMN last_collector TEXT;
+   ALTER TABLE admissions ADD COLUMN last_seen TEXT;`,
 ];
 
 /** DATA_DIR/uaic.db (SQLite). 시작할 때 필요한 마이그레이션을 적용한다. */

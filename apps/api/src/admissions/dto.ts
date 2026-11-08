@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { CATEGORIES, type AdmissionDraft, type Category, type CoverageEntry, type IngestOutcome } from '@susi/shared';
 
 export class SearchQueryDto {
@@ -22,13 +22,17 @@ export class IngestDto {
 
   @IsArray() @ArrayMaxSize(5000)
   drafts: AdmissionDraft[];
+
+  /** 대학 자료를 모두 성공적으로 읽은 실행이면 true (빠진 항목 공개 내림) */
+  @IsOptional() @IsBoolean()
+  complete?: boolean;
 }
 
 export class IngestLogQueryDto {
   @IsOptional() @IsString() @MaxLength(40)
   runId?: string;
 
-  @IsOptional() @IsIn(['created', 'updated', 'unchanged', 'pending', 'rejected'])
+  @IsOptional() @IsIn(['created', 'updated', 'unchanged', 'pending', 'rejected', 'retired'])
   outcome?: IngestOutcome;
 
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(1000)

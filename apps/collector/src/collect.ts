@@ -17,6 +17,8 @@ export interface CollectContext {
 export interface CollectOutcome {
   drafts: AdmissionDraft[];
   coverage: CoverageEntry;
+  /** 모든 자료를 성공적으로 읽었으면 true → 이번에 안 나온 옛 항목을 내려도 된다 */
+  complete: boolean;
 }
 
 const PDF_MAGIC = Buffer.from('%PDF');
@@ -96,6 +98,7 @@ export async function collectUniversity(univ: University, config: UniversityConf
   if (!config || config.status !== 'active') {
     return {
       drafts: [],
+      complete: false,
       coverage: {
         ...base,
         status: (config?.status ?? 'unconfigured') as Exclude<ConfigStatus, 'active'>,
@@ -202,5 +205,6 @@ export async function collectUniversity(univ: University, config: UniversityConf
   // 같은 오류가 자료마다 반복되면 한 번만 적는다
   const errors = [...new Set(sources.filter((s) => s.error).map((s) => s.error as string))];
   const message = blocked ?? (okCount === sources.length ? (config.note ?? null) : errors.join(' / '));
-  return { drafts, coverage: { ...base, status, message, sources, drafts: drafts.length } };
+  const complete = sources.length > 0 && okCount === sources.length;
+  return { drafts, complete, coverage: { ...base, status, message, sources, drafts: drafts.length } };
 }

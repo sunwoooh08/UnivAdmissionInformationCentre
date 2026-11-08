@@ -127,11 +127,16 @@ export class AdmissionsService {
 
   // ───────── 수집 결과 반영 ─────────
 
-  ingest(collector: string, drafts: AdmissionDraft[]): IngestSummary {
+  /**
+   * @param complete 이 수집기가 맡은 대학의 자료를 모두 성공적으로 읽었으면 true.
+   *                 이때 이번에 나오지 않은 (이 수집기가 만든) 항목은 공개를 내린다.
+   */
+  ingest(collector: string, drafts: AdmissionDraft[], complete = false): IngestSummary {
     const runId = id();
     const at = new Date().toISOString();
     const entries: IngestLogEntry[] = [];
-    const counts: Record<IngestOutcome, number> = { created: 0, updated: 0, unchanged: 0, pending: 0, rejected: 0 };
+    const counts: Record<IngestOutcome, number> = { created: 0, updated: 0, unchanged: 0, pending: 0, rejected: 0, retired: 0 };
+    const seen = this.db.prepare('UPDATE admissions SET last_collector = ?, last_seen = ? WHERE id = ?');
 
     const find = this.db.prepare('SELECT * FROM admissions WHERE key = ?');
     const insert = this.db.prepare(
@@ -181,10 +186,28 @@ export class AdmissionsService {
             messages = !publish ? [`공개 대기: ${missing.join(', ')} 없음`, ...changes] : sourceOnly ? ['출처 확인일 갱신'] : changes;
           }
         }
+        if (admissionId && outcome !== 'rejected') seen.run(collector, at, admissionId);
+        else if (admissionId && row) seen.run(collector, at, admissionId); // 값은 버렸어도 항목은 아직 자료에 있음
         counts[outcome]++;
         const entry: IngestLogEntry = { id: id(), runId, collector, at, key, admissionId, outcome, messages };
         log.run(entry.id, runId, collector, at, key, admissionId, outcome, JSON.stringify(messages));
         entries.push(entry);
+      }
+
+      if (complete) {
+        // 이번 전체 수집에 나오지 않은 이 수집기의 항목: 공개를 내린다 (다시 나오면 자동으로 복구)
+        const gone = this.db
+          .prepare('SELECT id, key FROM admissions WHERE last_collector = ? AND (last_seen IS NULL OR last_seen < ?) AND published = 1')
+          .all(collector, at) as unknown as { id: string; key: string }[];
+        const retire = this.db.prepare("UPDATE admissions SET published = 0, missing = '[\"최근 수집에서 빠짐\"]', updated_at = ? WHERE id = ?");
+        for (const g of gone) {
+          retire.run(at, g.id);
+          counts.retired++;
+          const messages = ['최근 전체 수집에서 이 항목이 나오지 않아 공개를 내림'];
+          const entry: IngestLogEntry = { id: id(), runId, collector, at, key: g.key, admissionId: g.id, outcome: 'retired', messages };
+          log.run(entry.id, runId, collector, at, g.key, g.id, 'retired', JSON.stringify(messages));
+          entries.push(entry);
+        }
       }
     });
     this.cache = null;
@@ -306,7 +329,7 @@ export class AdmissionsService {
         `SELECT run_id AS runId, collector, MIN(at) AS at,
                 SUM(outcome = 'created') AS created, SUM(outcome = 'updated') AS updated,
                 SUM(outcome = 'unchanged') AS unchanged, SUM(outcome = 'pending') AS pending,
-                SUM(outcome = 'rejected') AS rejected
+                SUM(outcome = 'rejected') AS rejected, SUM(outcome = 'retired') AS retired
          FROM ingest_log GROUP BY run_id ORDER BY at DESC LIMIT ?`,
       )
       .all(limit);
