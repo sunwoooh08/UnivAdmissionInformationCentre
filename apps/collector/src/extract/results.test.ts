@@ -160,14 +160,25 @@ test('table of contents lines are not sections (이화여대 형식)', () => {
   );
 });
 
-test('every active config points at a registered university and has expected years', () => {
+test('every active config has a source and valid specs', () => {
   for (const [id, c] of CONFIG_BY_ID) {
     if (c.status !== 'active') continue;
-    assert.ok(c.results?.length, `${id}: 자료 없음`);
+    assert.ok(c.results?.length || c.guide, `${id}: 입시결과도 모집요강도 없음`);
     for (const r of c.results ?? []) {
       assert.ok(r.years.length > 0, `${id}: years`);
       assert.ok(r.spec.section.flags.includes('g'), `${id}: section g flag`);
       assert.ok(/^https:\/\//.test(r.url), `${id}: https`);
     }
   }
+});
+
+test('unit names lose college prefixes, exam times and change markers', async () => {
+  const { cleanDept } = await import('./results.js');
+  assert.equal(cleanDept('경찰사법 경찰행정학부'), '경찰행정학부');
+  assert.equal(cleanDept('법과 법학과'), '법학과');
+  assert.equal(cleanDept('(09:30~11:00) 경영학부'), '경영학부');
+  assert.equal(cleanDept('경영대학 광역화'), '경영대학');
+  assert.equal(cleanDept('국어국문학과†'), '국어국문학과');
+  assert.equal(cleanDept('열린전공학부(인문)'), '열린전공학부(인문)');
+  assert.equal(cleanDept('전기·생체공학부(전기공학전공)'), '전기·생체공학부(전기공학전공)');
 });

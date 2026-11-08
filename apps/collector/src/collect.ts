@@ -1,7 +1,9 @@
 import type { AdmissionDraft, AdmissionSchedule, CoverageEntry, CoverageSource, Source } from '@susi/shared';
 import type { ConfigStatus, UniversityConfig } from './configs/types.js';
 import { extractResults, type ExtractedRow, type ResultsSpec } from './extract/results.js';
+import { extractPositionedMatrix } from './extract/positioned.js';
 import { RobotsDisallowedError, RobotsUnavailableError, type PoliteFetcher } from './http.js';
+import { pdfToWords, type PdfPage } from './pdf.js';
 import type { University } from './registry/index.js';
 
 export interface CollectContext {
@@ -19,12 +21,19 @@ export interface CollectOutcome {
 
 const PDF_MAGIC = Buffer.from('%PDF');
 
-/** 받은 파일을 PDF 텍스트로 */
-async function fetchPdfText(ctx: CollectContext, url: string): Promise<string> {
+interface LoadedPdf {
+  text: string;
+  /** 좌표가 필요할 때만 읽는다 */
+  words: () => Promise<PdfPage[]>;
+}
+
+/** 파일을 받아 PDF 텍스트로 */
+async function fetchPdf(ctx: CollectContext, url: string): Promise<LoadedPdf> {
   const res = await ctx.fetcher.get(url);
   if (res.status >= 400) throw new Error(`HTTP ${res.status}`);
   if (!res.body.subarray(0, 4).equals(PDF_MAGIC)) throw new Error(`PDF 가 아님 (${res.contentType || '알 수 없는 형식'})`);
-  return ctx.pdfToText(res.body);
+  let words: Promise<PdfPage[]> | null = null;
+  return { text: await ctx.pdfToText(res.body), words: () => (words ??= pdfToWords(res.body)) };
 }
 
 /** (전형, 모집단위) 단위로 수집 결과를 모은다 */
@@ -101,12 +110,12 @@ export async function collectUniversity(univ: University, config: UniversityConf
   const sources: CoverageSource[] = [];
   let blocked: string | null = null;
 
-  const handle = async (label: string, url: string, work: (text: string, report: CoverageSource) => void) => {
+  const handle = async (label: string, url: string, work: (pdf: LoadedPdf, report: CoverageSource) => void | Promise<void>) => {
     const report: CoverageSource = { label, url, ok: false, rows: 0, unmatched: 0 };
     sources.push(report);
     try {
-      const text = await fetchPdfText(ctx, url);
-      work(text, report);
+      const pdf = await fetchPdf(ctx, url);
+      await work(pdf, report);
       report.ok = true;
       ctx.log(`${label}: ${report.rows}행${report.unmatched ? `, 형식 불일치 ${report.unmatched}줄` : ''}`);
     } catch (err) {
@@ -120,7 +129,7 @@ export async function collectUniversity(univ: University, config: UniversityConf
 
   // 1) 입시결과: 지난 학년도 모집인원·충원
   for (const src of config.results ?? []) {
-    await handle(src.label, src.url, (text, report) => {
+    await handle(src.label, src.url, ({ text }, report) => {
       const { rows, unmatched } = extract(text, src.spec);
       report.unmatched = unmatched;
       const source: Source = { label: src.label, url: src.url, checkedAt: ctx.today };
@@ -140,10 +149,14 @@ export async function collectUniversity(univ: University, config: UniversityConf
   // 2) 모집요강: 올해 모집인원과 전형 일정
   const guide = config.guide;
   if (guide) {
-    await handle(guide.label, guide.url, (text, report) => {
+    await handle(guide.label, guide.url, async (pdf, report) => {
       const source: Source = { label: guide.label, url: guide.url, checkedAt: ctx.today };
-      for (const spec of guide.quotas ?? []) {
-        const { rows, unmatched } = extract(text, spec);
+      const quotaResults = (guide.quotas ?? []).map((spec) => extract(pdf.text, spec));
+      for (const spec of guide.positionedQuotas ?? []) {
+        const r = extractPositionedMatrix(await pdf.words(), spec);
+        quotaResults.push({ rows: r.rows, unmatched: r.unmatched.length });
+      }
+      for (const { rows, unmatched } of quotaResults) {
         report.unmatched += unmatched;
         for (const row of rows) {
           if (row.currentQuota === undefined) continue;
@@ -154,7 +167,7 @@ export async function collectUniversity(univ: University, config: UniversityConf
           report.rows++;
         }
       }
-      if ((guide.quotas?.length ?? 0) > 0 && report.rows === 0) {
+      if ((guide.quotas?.length ?? 0) + (guide.positionedQuotas?.length ?? 0) > 0 && report.rows === 0) {
         throw new Error('모집인원 표를 읽지 못함 (양식이 바뀌었을 수 있음)');
       }
       // 일정은 그 전형에 속한 모집단위 전부에 적용

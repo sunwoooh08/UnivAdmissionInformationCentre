@@ -1,4 +1,5 @@
 import type { AdmissionSchedule, Category } from '@susi/shared';
+import type { PositionedMatrixSpec } from '../extract/positioned.js';
 import type { ResultsSpec } from '../extract/results.js';
 
 /**
@@ -44,6 +45,8 @@ export interface GuideSource {
   format: 'pdf';
   /** 올해 모집인원 표 (행 패턴의 quotaNow 그룹, 또는 matrix + m0, m1 …) */
   quotas?: ResultsSpec[];
+  /** 빈 칸이 있는 행렬 모집인원 표를 PDF 좌표로 읽기 (합계 열 검사) */
+  positionedQuotas?: PositionedMatrixSpec[];
   /** 전형별 일정. 이 전형에 속한 모집단위 전체에 적용된다 */
   schedules?: TrackSchedule[];
 }

@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { CONFIG_BY_ID, CONFIG_ERRORS } from './configs/index.js';
 import { extractResults, type ResultsSpec } from './extract/results.js';
-import { pdfToText } from './pdf.js';
+import { extractPositionedMatrix } from './extract/positioned.js';
+import { pdfToText, pdfToWords } from './pdf.js';
 
 /**
  * 설정을 내려받은 PDF 로 시험한다 (네트워크 사용 안 함).
@@ -36,9 +37,14 @@ if (mode === '--results') {
 }
 if (!file) throw new Error('PDF 파일 경로가 필요합니다.');
 
-const text = await pdfToText(readFileSync(file));
-for (const [i, spec] of specs.entries()) {
-  const { rows, unmatched } = extractResults(text, spec);
+const buf = readFileSync(file);
+const text = await pdfToText(buf);
+const runs: (() => Promise<ReturnType<typeof extractResults>>)[] = specs.map((spec) => async () => extractResults(text, spec));
+if (mode === '--guide') {
+  for (const spec of config.guide?.positionedQuotas ?? []) runs.push(async () => extractPositionedMatrix(await pdfToWords(buf), spec));
+}
+for (const [i, run] of runs.entries()) {
+  const { rows, unmatched } = await run();
   const byTrack: Record<string, number> = {};
   for (const r of rows) byTrack[`${r.category} | ${r.track}`] = (byTrack[`${r.category} | ${r.track}`] ?? 0) + 1;
   console.log(`\n[spec ${i}] ${rows.length}행, 형식 불일치 ${unmatched.length}줄`);

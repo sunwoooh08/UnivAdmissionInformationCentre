@@ -22,7 +22,8 @@ export interface ResultsSpec {
   rows: { tracks?: RegExp; pattern: RegExp }[];
   /**
    * 행렬 표(행=모집단위, 열=전형)일 때 열 순서대로의 전형명. 행 패턴의 m0, m1 … 그룹과 짝을 이룬다.
-   * '-' 이거나 0 인 칸은 그 전형에서 뽑지 않는 것으로 본다.
+   * '-' 이거나 0 인 칸은 그 전형에서 뽑지 않는 것으로 본다. 빈 칸이 '-' 없이 비어 있는 표는
+   * 칸 수로는 열을 알 수 없으므로 이 방식 대신 guide.positionedQuotas(PDF 좌표)를 쓴다.
    */
   matrix?: string[];
   /** 모집단위로 보지 않을 칸 (합계 등) */
@@ -42,6 +43,13 @@ export interface ResultsSpec {
   sectionMarker?: RegExp;
   /** 이 줄을 만나면 지금 전형을 끝낸다. 기본값은 정시·수능 위주 표의 시작 */
   sectionEnd?: RegExp;
+  /**
+   * 전형별 장(章) 제목 (예: "종합   Do Dream      655명"). 이름 그룹: track, category.
+   * 이것을 쓰면 표의 전형명은 장 제목에서 오고, section 은 표의 위치(좌우 패널)만 정한다.
+   */
+  chapter?: RegExp;
+  /** 장 제목처럼 생겼지만 chapter 에 맞지 않는 줄 → 지금 장을 끝낸다 (모르는 장의 표가 앞 전형에 붙지 않게) */
+  chapterMarker?: RegExp;
 }
 
 export interface ExtractedRow {
@@ -66,10 +74,10 @@ interface Panel {
 }
 
 const DEFAULT_SKIP =
-  /^(계|합계|소계|총계|전체|모집단위|단과대학|대학|학부|계열|구분|평균|비고|-)$|(^|\s)(계|합계|소계|총계)$|학년도|입학전형|입시결과|선발결과|전형결과/;
+  /^(계|합계|소계|총계|전체|모집단위|단과대학|대학|학부|계열|구분|평균|비고|-)$|(^|\s)(계|합계|소계|총계)$|학년도|입학전형|입시결과|선발결과|전형결과|^(인문|자연|상경|예체능|예능|체능|통합|공학|의약|의학|사범|사회|인문사회|자연과학|인문\/자연|자연\/인문)$/;
 /** 수시 표가 끝나고 정시·수능 표가 시작되는 줄 */
 const DEFAULT_SECTION_END = /정시|수능\s*위주|수능\s*성적|수능전형|수능\s*\(/;
-const NUMERIC_CELL = /^[-–]$|^\d[\d,.]*(\s*:\s*1)?%?$/;
+const NUMERIC_CELL = /^[-–]$|^\d[\d,.]*(\s*:\s*1)?%?\*?$/;
 
 function cleanTrack(s: string): string {
   return s
@@ -82,18 +90,26 @@ function cleanTrack(s: string): string {
     .trim();
 }
 
-function cleanDept(s: string): string {
-  return s
+export function cleanDept(s: string): string {
+  let d = s
     .normalize('NFC')
     .replace(/\s+/g, ' ')
+    .replace(/^\(\s*\d{1,2}:\d{2}\s*[~-]\s*\d{1,2}:\d{2}\s*\)\s*/, '') // 고사 시간 (09:30~11:00)
     .replace(/[\d)]+\)$/, '') // 각주 번호 1) 2)
     .replace(/[†‡*※◆◇●○■□▲△]+$/u, '') // 표시 기호
+    .replace(/\s+(광역화|신설|폐지|변경|통합|모집중지)$/, '') // 변경 표시
     .trim();
+  // "경찰사법 경찰행정학부"처럼 한 칸 띄고 붙은 단과대학 약칭을 뗀다
+  const parts = d.split(' ');
+  if (parts.length === 2 && (parts[0]?.length ?? 99) <= 5 && /(학과|학부|과|부|전공|과정)(\([^)]*\))?$/.test(parts[1] ?? '')) {
+    d = parts[1] ?? d;
+  }
+  return d;
 }
 
 function toInt(s: string | undefined): number | null {
   if (s === undefined) return null;
-  const t = s.replace(/[,\s]/g, '');
+  const t = s.replace(/[,\s]/g, '').replace(/\*+$/, ''); // '10*' 같은 표시 기호
   return /^\d+$/.test(t) ? Number(t) : null;
 }
 
@@ -142,9 +158,24 @@ export function extractResults(text: string, spec: ResultsSpec): ExtractResult {
   const unmatched: ExtractResult['unmatched'] = [];
   const skipDept = spec.skipDept ?? DEFAULT_SKIP;
   let panels: Panel[] = [];
+  let chapter: { track: string; category: Category } | null = null;
 
   for (const rawLine of text.split(/\r?\n|\f/)) {
     const line = rawLine.replace(/\t/g, '    ');
+    if (spec.chapter) {
+      const m = spec.chapter.exec(line);
+      if (m) {
+        const track = (spec.renameTrack ?? cleanTrack)(cleanTrack(m.groups?.track ?? m[0]));
+        chapter = { track, category: m.groups?.category ? inferCategory(m.groups.category) : inferCategory(track) };
+        panels = [];
+        continue;
+      }
+      if (spec.chapterMarker?.test(line)) {
+        chapter = null;
+        panels = [];
+        continue;
+      }
+    }
     if ((spec.sectionEnd ?? DEFAULT_SECTION_END).test(line)) {
       panels = [];
       continue;
@@ -157,11 +188,13 @@ export function extractResults(text: string, spec: ResultsSpec): ExtractResult {
     if (sections.length > 0 && spec.sectionAlone && !/^[\s\d.]*$/.test(line.replace(spec.section, ''))) continue;
     if (sections.length > 0) {
       panels = sections.map((m, i) => {
+        const start = i === 0 ? 0 : (m.index ?? 0);
+        if (spec.chapter) return { start, track: chapter?.track ?? null, category: chapter?.category ?? null };
         const raw = m.groups?.track ?? m[0];
         const track = (spec.renameTrack ?? cleanTrack)(cleanTrack(raw));
         const catText = m.groups?.category;
         return {
-          start: i === 0 ? 0 : (m.index ?? 0),
+          start,
           track,
           category: catText ? inferCategory(catText) : inferCategory(track),
         };
