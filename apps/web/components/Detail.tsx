@@ -3,16 +3,21 @@
 import { useEffect, useState } from 'react';
 import {
   admissionEvents,
+  computeOutlook,
   daysUntil,
+  formatDate,
   fillRate,
   formatDday,
   formatRange,
+  scaledFilled,
   sortHistory,
   type Admission,
   type CommonSchedule,
   type Outlook,
 } from '@susi/shared';
 import { api } from '@/lib/api';
+import { isLocal } from '@/lib/storage';
+import { ReportForm } from './ReportForm';
 import { HistoryChart } from './HistoryChart';
 import { OutlookChart } from './OutlookChart';
 
@@ -36,6 +41,12 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
       setOutlook(null);
       return;
     }
+    // 내가 입력한 항목은 서버에 없으므로 브라우저에서 계산한다
+    if (isLocal(admission)) {
+      setOutlook(computeOutlook(admission, rank));
+      setError(admission.history.length ? null : '충원 이력을 입력하면 계산할 수 있습니다.');
+      return;
+    }
     const ctrl = new AbortController();
     const timer = setTimeout(() => {
       api
@@ -55,7 +66,7 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
       clearTimeout(timer);
       ctrl.abort();
     };
-  }, [admission.id, rank]);
+  }, [admission, rank]);
 
   const history = sortHistory(admission.history);
 
@@ -67,7 +78,8 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
             {admission.univ} {admission.dept}
           </h2>
           <p className="lead">
-            {admission.track} · 올해 모집 {admission.quota}명{admission.sample ? ' · 예시 데이터' : ''}
+            {admission.track} · {admission.quota ? `올해 모집 ${admission.quota}명` : '올해 모집인원 확인 중'}
+            {isLocal(admission) ? ' · 내가 입력한 정보' : ''}
           </p>
         </div>
         {onEdit && (
@@ -106,7 +118,10 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
           </tbody>
         </table>
       </div>
-      <p className="small muted">등록·충원 일정을 따로 입력하지 않은 경우 대교협 공통 일정으로 표시합니다.</p>
+      <p className="small muted">
+        {admission.schedule.final ? '' : '최초합격 발표일은 아직 모집요강에서 확인하지 못했습니다. '}
+        등록·충원 일정은 대학별 값이 없으면 대교협 공통 일정으로 표시합니다.
+      </p>
 
       <div className="cols">
         <div>
@@ -128,10 +143,10 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
                   {history.map((h) => (
                     <tr key={h.year}>
                       <td>{h.year}</td>
-                      <td className="num">{h.quota}</td>
+                      <td className="num">{h.quota ?? <span className="muted">미공개</span>}</td>
                       <td className="num">{h.filled}</td>
-                      <td className="num">{Math.round(fillRate(h) * 100)}%</td>
-                      <td className="num">{Math.round(fillRate(h) * admission.quota)}명</td>
+                      <td className="num">{rateText(fillRate(h))}</td>
+                      <td className="num">{Math.round(scaledFilled(h, admission.quota))}명</td>
                     </tr>
                   ))}
                 </tbody>
@@ -216,7 +231,8 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
           <details>
             <summary>계산 방법</summary>
             <p>
-              연도별 충원율(충원인원 ÷ 모집인원)에 올해 모집인원을 곱해 올해 기준 충원인원으로 환산하고, 최근 연도에 더
+              연도별 충원율(충원인원 ÷ 모집인원)에 올해 모집인원을 곱해 올해 기준 충원인원으로 환산하고(모집인원이 공개되지
+              않은 해는 충원인원을 그대로 씁니다), 최근 연도에 더
               큰 가중치(50·30·20%)를 둬 평균을 냅니다. 연도별 차이로 퍼짐을 추정하되, 3개년만으로는 변동을 작게 보기
               쉬워 평균의 20% 이상으로 둡니다.
             </p>
@@ -228,6 +244,30 @@ export function Detail({ admission, schedule, today, rank, onRankChange, onEdit 
           </details>
         </div>
       </div>
+
+      {!isLocal(admission) && (
+        <>
+          <h3>출처</h3>
+          <ul className="sources">
+            {admission.sources.map((src) => (
+              <li key={src.url}>
+                <a href={src.url} target="_blank" rel="noopener noreferrer">
+                  {src.label}
+                </a>{' '}
+                <span className="muted small">확인 {formatDate(src.checkedAt)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">
+            대학이 게시한 자료에서 자동으로 수집해 정해진 규칙으로 검증한 뒤 반영한 값입니다. 최종 확인은 출처 원문으로 하세요.
+          </p>
+          <ReportForm admissionId={admission.id} />
+        </>
+      )}
     </section>
   );
+}
+
+function rateText(rate: number | null): string {
+  return rate === null ? '–' : `${Math.round(rate * 100)}%`;
 }

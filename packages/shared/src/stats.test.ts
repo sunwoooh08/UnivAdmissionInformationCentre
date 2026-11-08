@@ -49,6 +49,25 @@ test('computeOutlook reports per-year verdicts', () => {
   assert.equal(o.curve[0]?.rank, 1);
 });
 
+test('unknown quotas fall back to raw filled counts', () => {
+  const o = computeOutlook(
+    {
+      quota: null,
+      history: [
+        { year: 2026, quota: null, filled: 40 },
+        { year: 2025, quota: null, filled: 50 },
+      ],
+    },
+    30,
+  );
+  assert.ok(o);
+  assert.ok(Math.abs(o.expectedFilled - (40 * 0.5 + 50 * 0.3) / 0.8) < 1e-9);
+  assert.deepEqual(o.byYear.map((y) => [y.scaledFilled, y.passed, y.rate]), [
+    [40, true, null],
+    [50, true, null],
+  ]);
+});
+
 test('computeOutlook returns null without history', () => {
   assert.equal(computeOutlook({ quota: 10, history: [] }, 3), null);
 });
@@ -67,7 +86,7 @@ test('admissionEvents fills defaults and sorts', () => {
     defaults: { register: ['2026-12-21', '2026-12-23'], waitlistEnd: '2026-12-29T21:00', waitlistRegEnd: '2026-12-30T22:00' },
   };
   const a: Admission = {
-    id: 'x', univ: 'u', track: 't', category: '학생부종합', dept: 'd', quota: 5, sample: false,
+    id: 'x', univ: 'u', track: 't', category: '학생부종합', dept: 'd', quota: 5, sources: [], updatedAt: '2026-11-08T00:00:00Z',
     schedule: { first: '2026-11-13', exam: ['2026-11-21', '2026-11-22'], final: '2026-12-12' },
     history: [],
   };

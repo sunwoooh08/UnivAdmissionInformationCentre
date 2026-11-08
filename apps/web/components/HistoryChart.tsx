@@ -10,7 +10,7 @@ const PAD = { top: 22, right: 8, bottom: 44, left: 32 };
 export function HistoryChart({ history }: { history: HistoryYear[] }) {
   const hs = sortHistory(history).reverse();
   if (hs.length === 0) return <p className="empty">충원 이력이 없습니다.</p>;
-  const max = Math.max(...hs.flatMap((h) => [h.quota, h.filled]), 1);
+  const max = Math.max(...hs.flatMap((h) => [h.quota ?? 0, h.filled]), 1);
   const top = niceMax(max);
   const plotH = H - PAD.top - PAD.bottom;
   const plotW = W - PAD.left - PAD.right;
@@ -32,14 +32,20 @@ export function HistoryChart({ history }: { history: HistoryYear[] }) {
           const cx = PAD.left + groupW * i + groupW / 2;
           return (
             <g key={h.year}>
-              <rect x={cx - barW - 2} y={y(h.quota)} width={barW} height={y(0) - y(h.quota)} fill="var(--bar)" />
-              <text x={cx - barW / 2 - 2} y={y(h.quota) - 5} textAnchor="middle">{h.quota}</text>
+              {h.quota !== null && (
+                <>
+                  <rect x={cx - barW - 2} y={y(h.quota)} width={barW} height={y(0) - y(h.quota)} fill="var(--bar)" />
+                  <text x={cx - barW / 2 - 2} y={y(h.quota) - 5} textAnchor="middle">{h.quota}</text>
+                </>
+              )}
               <rect x={cx + 2} y={y(h.filled)} width={barW} height={y(0) - y(h.filled)} fill="var(--ink)" />
               <text x={cx + barW / 2 + 2} y={y(h.filled) - 5} textAnchor="middle" style={{ fill: 'var(--ink)', fontWeight: 600 }}>
                 {h.filled}
               </text>
               <text x={cx} y={H - PAD.bottom + 16} textAnchor="middle" style={{ fill: 'var(--ink)' }}>{h.year}학년도</text>
-              <text x={cx} y={H - PAD.bottom + 32} textAnchor="middle">충원율 {Math.round(fillRate(h) * 100)}%</text>
+              <text x={cx} y={H - PAD.bottom + 32} textAnchor="middle">
+                {fillRate(h) === null ? '모집인원 미공개' : `충원율 ${Math.round((fillRate(h) ?? 0) * 100)}%`}
+              </text>
             </g>
           );
         })}

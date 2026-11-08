@@ -152,6 +152,14 @@ fi
 OLD_DOMAIN=$(env_get "$CONF_DIR/deploy.env" DOMAIN)
 ask DOMAIN "도메인 (없으면 Enter → IP로 접속)" "$OLD_DOMAIN"
 
+c_info "수집기는 대학 서버에 보내는 요청에 연락처를 밝힙니다 (User-Agent)."
+OLD_CONTACT=$(env_get "$CONF_DIR/collector.env" COLLECTOR_CONTACT)
+while :; do
+  ask COLLECTOR_CONTACT "수집기 연락처 (사이트 주소 또는 이메일)" "${OLD_CONTACT:-${DOMAIN:+https://$DOMAIN}}"
+  [[ -n $COLLECTOR_CONTACT ]] && break
+  c_warn "연락처가 필요합니다."
+done
+
 ADMIN_USERNAME=$(env_get "$CONF_DIR/admin.env" ADMIN_USERNAME)
 ADMIN_PASSWORD_HASH=$(env_get "$CONF_DIR/admin.env" ADMIN_PASSWORD_HASH)
 ADMIN_PW=""
@@ -185,7 +193,7 @@ if ask_yn "방화벽(ufw)을 켜고 SSH·HTTP·HTTPS만 열까요?" y; then SETU
 c_step "시스템 패키지 설치 (apt)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y ca-certificates curl gnupg git screen nginx build-essential openssl cron
+apt-get install -y ca-certificates curl gnupg git screen nginx build-essential openssl cron poppler-utils poppler-data
 
 if ! command -v node >/dev/null || [[ $(node -p 'process.versions.node.split(".")[0]') -lt $NODE_MAJOR ]]; then
   c_info "Node.js ${NODE_MAJOR}.x 저장소 추가"
@@ -264,6 +272,9 @@ write_env "$CONF_DIR/admin.env" \
   "API_INTERNAL_URL=http://127.0.0.1:$API_PORT" "ADMIN_TOKEN=$ADMIN_TOKEN" \
   "ADMIN_USERNAME=$ADMIN_USERNAME" "ADMIN_PASSWORD_HASH=$ADMIN_PASSWORD_HASH" \
   "SESSION_SECRET=$SESSION_SECRET" "COOKIE_SECURE=$COOKIE_SECURE"
+write_env "$CONF_DIR/collector.env" \
+  "API_INTERNAL_URL=http://127.0.0.1:$API_PORT" "ADMIN_TOKEN=$ADMIN_TOKEN" "DATA_DIR=$DATA_DIR" \
+  "COLLECTOR_CONTACT=$COLLECTOR_CONTACT" "COLLECTOR_DELAY_MS=3000"
 write_env "$CONF_DIR/deploy.env" \
   "DOMAIN=$DOMAIN" "ADMIN_PUBLIC=$ADMIN_PUBLIC" "USE_TLS=$USE_TLS" "TLS_EMAIL=${TLS_EMAIL:-}"
 
@@ -293,9 +304,29 @@ chown "$APP_USER:$APP_USER" "$BASE/start.sh"
 chmod 750 "$BASE/start.sh"
 as_app "'$BASE/start.sh'"
 
-# 재부팅 시 자동 실행
-( crontab -u "$APP_USER" -l 2>/dev/null | grep -v "$BASE/start.sh" || true
-  echo "@reboot sleep 15 && $BASE/start.sh >> $LOG_DIR/boot.log 2>&1" ) | crontab -u "$APP_USER" -
+# 대학 자료 수집 스크립트
+cat >"$BASE/collect.sh" <<EOF
+#!/usr/bin/env bash
+# 대학별 수집기를 실행해 API 로 보낸다. 검증을 통과한 값은 바로 사이트에 반영된다.
+set -euo pipefail
+cd '$APP_DIR'
+set -a; . '$CONF_DIR/collector.env'; set +a
+echo "=== \$(date '+%F %T') 수집 시작"
+node apps/collector/dist/run.js "\$@"
+echo "=== \$(date '+%F %T') 수집 끝"
+EOF
+chown "$APP_USER:$APP_USER" "$BASE/collect.sh"
+chmod 750 "$BASE/collect.sh"
+
+# 매일 05:17 (KST) 수집. 서버 시간대가 KST 가 아니어도 같은 시각이 되도록 시를 계산한다.
+TZ_OFF=$(date +%z)
+OFFSET_MIN=$(( ${TZ_OFF:0:1}1 * (10#${TZ_OFF:1:2} * 60 + 10#${TZ_OFF:3:2}) ))
+COLLECT_MIN=$(( ((5 * 60 + 17 - 540 + OFFSET_MIN) % 1440 + 1440) % 1440 ))
+
+# 재부팅 시 자동 실행 + 매일 수집
+( crontab -u "$APP_USER" -l 2>/dev/null | grep -v -e "$BASE/start.sh" -e "$BASE/collect.sh" || true
+  echo "@reboot sleep 15 && $BASE/start.sh >> $LOG_DIR/boot.log 2>&1"
+  echo "$((COLLECT_MIN % 60)) $((COLLECT_MIN / 60)) * * * $BASE/collect.sh >> $LOG_DIR/collector.log 2>&1" ) | crontab -u "$APP_USER" -
 if pidof systemd >/dev/null 2>&1; then systemctl enable --now cron >/dev/null 2>&1 || true; else service cron start >/dev/null 2>&1 || true; fi
 
 # 로그 파일 정리 (logrotate)
@@ -397,6 +428,10 @@ check() { # check 이름 URL
 check "API"   "http://127.0.0.1:$API_PORT/api/health"
 check "웹"    "http://127.0.0.1:$WEB_PORT/"
 check "어드민" "http://127.0.0.1:$ADMIN_PORT/login"
+
+c_step "첫 수집 (백그라운드)"
+as_app "screen -S uaic-collect -X quit >/dev/null 2>&1 || true; screen -dmS uaic-collect bash -c '$BASE/collect.sh >> $LOG_DIR/collector.log 2>&1'"
+c_info "진행 상황: tail -f $LOG_DIR/collector.log"
 check "nginx" "http://127.0.0.1/"
 
 PUBLIC_IP=$(curl -fsS -4 --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
@@ -422,6 +457,7 @@ cat <<EOF
     데이터          $DATA_DIR/   (직접 추가한 지원 정보, 접속 기록)
     설정            $CONF_DIR/*.env
     재시작          sudo -u $APP_USER $BASE/start.sh
+    수집 바로 실행  sudo -u $APP_USER $BASE/collect.sh   (매일 05:17 KST 자동)
     업데이트        sudo bash $APP_DIR/deploy/deploy.sh
 EOF
 [[ $FIRST_RUN == 1 ]] && echo && c_info "재부팅해도 cron(@reboot)으로 자동으로 다시 뜹니다."

@@ -44,20 +44,11 @@ function classify(method: string, path: string): AccessAction | null {
   if (!path.startsWith('/api/')) return null;
   if (path.startsWith('/api/admin') || path.startsWith('/api/health')) return null;
   if (path === '/api/schedule') return 'schedule';
-  if (!path.startsWith('/api/admissions')) return null;
-  switch (method) {
-    case 'GET':
-      if (path.endsWith('/outlook')) return 'outlook';
-      return path === '/api/admissions' ? 'search' : 'view';
-    case 'POST':
-      return 'create';
-    case 'PUT':
-      return 'update';
-    case 'DELETE':
-      return 'delete';
-    default:
-      return null;
-  }
+  if (path === '/api/reports' && method === 'POST') return 'report';
+  if (!path.startsWith('/api/admissions') || method !== 'GET') return null;
+  if (path.endsWith('/outlook')) return 'outlook';
+  if (path === '/api/admissions/stats') return null;
+  return path === '/api/admissions' ? 'search' : 'view';
 }
 
 function flattenQuery(q: Request['query']): Record<string, string> {

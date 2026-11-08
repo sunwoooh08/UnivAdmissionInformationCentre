@@ -1,107 +1,337 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { computeOutlook, type Admission, type AdmissionInput, type Category } from '@susi/shared';
-import { SAMPLE_ADMISSIONS } from './seed.js';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import {
+  admissionKey,
+  computeOutlook,
+  describeChanges,
+  mergeDraft,
+  missingForPublish,
+  RULES_2027,
+  validateDraft,
+  validateMerged,
+  type Admission,
+  type AdmissionDraft,
+  type AdmissionSchedule,
+  type Category,
+  type IngestLogEntry,
+  type IngestOutcome,
+  type IngestSummary,
+  type WorkingAdmission,
+} from '@susi/shared';
+import { DatabaseService } from '../db/database.service.js';
+
+interface Row {
+  id: string;
+  key: string;
+  data: string;
+  published: number;
+  hidden: number;
+  missing: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminAdmissionRow {
+  id: string;
+  univ: string;
+  track: string;
+  dept: string;
+  published: boolean;
+  hidden: boolean;
+  missing: string[];
+  sources: number;
+  historyYears: number[];
+  updatedAt: string;
+}
+
+const id = () => randomBytes(6).toString('base64url');
+
+function toAdmission(row: Row): Admission {
+  const w = JSON.parse(row.data) as WorkingAdmission;
+  return {
+    id: row.id,
+    univ: w.univ,
+    track: w.track,
+    dept: w.dept,
+    category: w.category as Category,
+    quota: w.quota ?? null,
+    schedule: {
+      first: w.schedule.first ?? null,
+      exam: w.schedule.exam ?? null,
+      final: w.schedule.final ?? null,
+      register: w.schedule.register ?? null,
+      waitlistEnd: w.schedule.waitlistEnd ?? null,
+      waitlistRegEnd: w.schedule.waitlistRegEnd ?? null,
+    } satisfies AdmissionSchedule,
+    history: w.history,
+    sources: w.sources,
+    updatedAt: row.updated_at,
+  };
+}
 
 /**
- * 예시 데이터(읽기 전용) + 사용자가 추가한 항목(JSON 파일에 저장).
- * 저장 위치는 DATA_DIR 환경변수 (기본: 실행 위치의 ./data).
+ * 지원 정보 저장소. 수집기가 보낸 결과를 자동 검증한 뒤 바로 반영한다.
+ * 반영 전 값은 revisions 에 남겨 되돌릴 수 있다.
  */
 @Injectable()
-export class AdmissionsService implements OnModuleInit {
-  private readonly logger = new Logger(AdmissionsService.name);
-  private readonly file = join(process.env.DATA_DIR ?? join(process.cwd(), 'data'), 'admissions.json');
-  private custom: Admission[] = [];
-  private writing: Promise<void> = Promise.resolve();
+export class AdmissionsService {
+  private cache: Admission[] | null = null;
 
-  async onModuleInit() {
-    try {
-      const raw = await readFile(this.file, 'utf8');
-      const parsed = JSON.parse(raw) as Admission[];
-      this.custom = Array.isArray(parsed) ? parsed.map((a) => ({ ...a, sample: false })) : [];
-      this.logger.log(`Loaded ${this.custom.length} saved admissions from ${this.file}`);
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-    }
+  constructor(private readonly database: DatabaseService) {}
+
+  private get db() {
+    return this.database.db;
   }
 
+  /** 공개 중인 항목 (검증을 통과했고 필수 값이 다 있으며 숨기지 않은 것) */
   all(): Admission[] {
-    return [...this.custom, ...SAMPLE_ADMISSIONS];
+    if (!this.cache) {
+      const rows = this.db.prepare('SELECT * FROM admissions WHERE published = 1 AND hidden = 0').all() as unknown as Row[];
+      this.cache = rows.map(toAdmission).sort((a, b) => a.univ.localeCompare(b.univ, 'ko') || a.dept.localeCompare(b.dept, 'ko'));
+    }
+    return this.cache;
   }
 
-  search(q?: string, category?: Category): Admission[] {
+  /** 검색. 검색어도 유형도 없으면 빈 목록 (전체 목록을 한 번에 내려보내지 않는다) */
+  search(q?: string, category?: Category, limit = 100): Admission[] {
     const terms = (q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length === 0 && !category) return [];
     return this.all().filter((a) => {
       if (category && a.category !== category) return false;
       const hay = `${a.univ} ${a.track} ${a.category} ${a.dept}`.toLowerCase();
       return terms.every((t) => hay.includes(t));
-    });
+    }).slice(0, limit);
   }
 
-  get(id: string): Admission {
-    const found = this.all().find((a) => a.id === id);
+  stats() {
+    const all = this.all();
+    return { universities: new Set(all.map((a) => a.univ)).size, admissions: all.length };
+  }
+
+  get(admissionId: string): Admission {
+    const found = this.all().find((a) => a.id === admissionId);
     if (!found) throw new NotFoundException('해당 지원 정보를 찾을 수 없습니다.');
     return found;
   }
 
-  async create(input: AdmissionInput): Promise<Admission> {
-    const admission: Admission = { ...normalize(input), id: randomUUID(), sample: false };
-    this.custom.unshift(admission);
-    await this.persist();
-    return admission;
+  outlook(admissionId: string, rank: number) {
+    return computeOutlook(this.get(admissionId), rank);
   }
 
-  async update(id: string, input: AdmissionInput): Promise<Admission> {
-    const idx = this.custom.findIndex((a) => a.id === id);
-    if (idx < 0) throw new NotFoundException('예시 데이터는 수정할 수 없습니다. 직접 추가한 항목만 수정됩니다.');
-    const updated: Admission = { ...normalize(input), id, sample: false };
-    this.custom[idx] = updated;
-    await this.persist();
-    return updated;
+  label(admissionId: string): string | null {
+    const row = this.db.prepare('SELECT data FROM admissions WHERE id = ?').get(admissionId) as { data: string } | undefined;
+    if (!row) return null;
+    const w = JSON.parse(row.data) as WorkingAdmission;
+    return `${w.univ} · ${w.track} · ${w.dept}`;
   }
 
-  async remove(id: string): Promise<void> {
-    const before = this.custom.length;
-    this.custom = this.custom.filter((a) => a.id !== id);
-    if (this.custom.length === before) throw new NotFoundException('직접 추가한 항목만 삭제할 수 있습니다.');
-    await this.persist();
-  }
+  // ───────── 수집 결과 반영 ─────────
 
-  outlook(id: string, rank: number) {
-    const a = this.get(id);
-    return computeOutlook(a, rank);
-  }
+  /**
+   * @param complete 이 수집기가 맡은 대학의 자료를 모두 성공적으로 읽었으면 true.
+   *                 이때 이번에 나오지 않은 (이 수집기가 만든) 항목은 공개를 내린다.
+   */
+  ingest(collector: string, drafts: AdmissionDraft[], complete = false): IngestSummary {
+    const runId = id();
+    const at = new Date().toISOString();
+    const entries: IngestLogEntry[] = [];
+    const counts: Record<IngestOutcome, number> = { created: 0, updated: 0, unchanged: 0, pending: 0, rejected: 0, retired: 0 };
+    const seen = this.db.prepare('UPDATE admissions SET last_collector = ?, last_seen = ? WHERE id = ?');
 
-  private persist(): Promise<void> {
-    const snapshot = JSON.stringify(this.custom, null, 2);
-    this.writing = this.writing.then(async () => {
-      await mkdir(dirname(this.file), { recursive: true });
-      const tmp = `${this.file}.tmp`;
-      await writeFile(tmp, snapshot, 'utf8');
-      await rename(tmp, this.file);
+    const find = this.db.prepare('SELECT * FROM admissions WHERE key = ?');
+    const insert = this.db.prepare(
+      'INSERT INTO admissions (id, key, data, published, missing, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    );
+    const update = this.db.prepare('UPDATE admissions SET data = ?, published = ?, missing = ?, updated_at = ? WHERE id = ?');
+    const saveRevision = this.db.prepare('INSERT INTO revisions (admission_id, data, at, run_id, collector) VALUES (?, ?, ?, ?, ?)');
+    const log = this.db.prepare(
+      'INSERT INTO ingest_log (id, run_id, collector, at, key, admission_id, outcome, messages) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    );
+
+    this.database.transaction(() => {
+      for (const draft of drafts) {
+        const key = typeof draft?.univ === 'string' ? admissionKey(draft) : '(형식 오류)';
+        const row = key ? (find.get(key) as Row | undefined) : undefined;
+        const base = row ? (JSON.parse(row.data) as WorkingAdmission) : null;
+
+        let outcome: IngestOutcome;
+        let messages: string[];
+        let admissionId = row?.id ?? null;
+
+        const errors = typeof draft?.univ === 'string' ? validateDraft(draft, base, RULES_2027) : ['수집 결과 형식이 올바르지 않습니다.'];
+        const merged = errors.length ? null : mergeDraft(base, draft);
+        const mergedErrors = merged ? validateMerged(merged) : [];
+
+        if (!merged || mergedErrors.length) {
+          outcome = 'rejected';
+          messages = [...errors, ...mergedErrors];
+        } else {
+          const missing = missingForPublish(merged);
+          const publish = missing.length === 0 ? 1 : 0;
+          const changes = describeChanges(base, merged);
+          const data = JSON.stringify(merged);
+          if (!row) {
+            admissionId = id();
+            insert.run(admissionId, key, data, publish, JSON.stringify(missing), at, at);
+            outcome = publish ? 'created' : 'pending';
+            messages = publish ? changes : [`공개 대기: ${missing.join(', ')} 없음`];
+          } else if (data === row.data) {
+            outcome = 'unchanged';
+            messages = [];
+          } else {
+            saveRevision.run(row.id, row.data, at, runId, collector);
+            update.run(data, publish, JSON.stringify(missing), at, row.id);
+            const sourceOnly = changes.length === 0;
+            outcome = !publish ? 'pending' : sourceOnly ? 'unchanged' : row.published ? 'updated' : 'created';
+            messages = !publish ? [`공개 대기: ${missing.join(', ')} 없음`, ...changes] : sourceOnly ? ['출처 확인일 갱신'] : changes;
+          }
+        }
+        if (admissionId && outcome !== 'rejected') seen.run(collector, at, admissionId);
+        else if (admissionId && row) seen.run(collector, at, admissionId); // 값은 버렸어도 항목은 아직 자료에 있음
+        counts[outcome]++;
+        const entry: IngestLogEntry = { id: id(), runId, collector, at, key, admissionId, outcome, messages };
+        log.run(entry.id, runId, collector, at, key, admissionId, outcome, JSON.stringify(messages));
+        entries.push(entry);
+      }
+
+      if (complete) {
+        // 이번 전체 수집에 나오지 않은 이 수집기의 항목: 공개를 내린다 (다시 나오면 자동으로 복구)
+        const gone = this.db
+          .prepare('SELECT id, key FROM admissions WHERE last_collector = ? AND (last_seen IS NULL OR last_seen < ?) AND published = 1')
+          .all(collector, at) as unknown as { id: string; key: string }[];
+        const retire = this.db.prepare("UPDATE admissions SET published = 0, missing = '[\"최근 수집에서 빠짐\"]', updated_at = ? WHERE id = ?");
+        for (const g of gone) {
+          retire.run(at, g.id);
+          counts.retired++;
+          const messages = ['최근 전체 수집에서 이 항목이 나오지 않아 공개를 내림'];
+          const entry: IngestLogEntry = { id: id(), runId, collector, at, key: g.key, admissionId: g.id, outcome: 'retired', messages };
+          log.run(entry.id, runId, collector, at, g.key, g.id, 'retired', JSON.stringify(messages));
+          entries.push(entry);
+        }
+      }
     });
-    return this.writing;
+    this.cache = null;
+    return { runId, counts, entries };
   }
-}
 
-function normalize(input: AdmissionInput): AdmissionInput {
-  const s = input.schedule;
-  return {
-    univ: input.univ.trim(),
-    track: input.track.trim(),
-    category: input.category,
-    dept: input.dept.trim(),
-    quota: input.quota,
-    schedule: {
-      first: s.first || null,
-      exam: s.exam ?? null,
-      final: s.final,
-      register: s.register ?? null,
-      waitlistEnd: s.waitlistEnd || null,
-      waitlistRegEnd: s.waitlistRegEnd || null,
-    },
-    history: [...input.history].sort((a, b) => b.year - a.year).slice(0, 3),
-  };
+  // ───────── 관리 ─────────
+
+  adminList(filter: { q?: string; state?: 'published' | 'pending' | 'hidden' }): AdminAdmissionRow[] {
+    const rows = this.db.prepare('SELECT * FROM admissions ORDER BY updated_at DESC').all() as unknown as Row[];
+    const terms = (filter.q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+    return rows
+      .map((r) => {
+        const w = JSON.parse(r.data) as WorkingAdmission;
+        return {
+          id: r.id,
+          univ: w.univ,
+          track: w.track,
+          dept: w.dept,
+          published: r.published === 1,
+          hidden: r.hidden === 1,
+          missing: JSON.parse(r.missing) as string[],
+          sources: w.sources.length,
+          historyYears: w.history.map((h) => h.year),
+          updatedAt: r.updated_at,
+        };
+      })
+      .filter((a) => {
+        if (filter.state === 'hidden' && !a.hidden) return false;
+        if (filter.state === 'published' && (!a.published || a.hidden)) return false;
+        if (filter.state === 'pending' && a.published) return false;
+        const hay = `${a.univ} ${a.track} ${a.dept}`.toLowerCase();
+        return terms.every((t) => hay.includes(t));
+      });
+  }
+
+  adminDetail(admissionId: string) {
+    const row = this.db.prepare('SELECT * FROM admissions WHERE id = ?').get(admissionId) as Row | undefined;
+    if (!row) throw new NotFoundException();
+    const revisions = this.db
+      .prepare('SELECT id, at, run_id AS runId, collector, data FROM revisions WHERE admission_id = ? ORDER BY id DESC LIMIT 50')
+      .all(admissionId) as unknown as { id: number; at: string; runId: string; collector: string; data: string }[];
+    const current = JSON.parse(row.data) as WorkingAdmission;
+    return {
+      id: row.id,
+      published: row.published === 1,
+      hidden: row.hidden === 1,
+      missing: JSON.parse(row.missing) as string[],
+      updatedAt: row.updated_at,
+      current,
+      revisions: revisions.map((r) => {
+        const prev = JSON.parse(r.data) as WorkingAdmission;
+        return { id: r.id, at: r.at, runId: r.runId, collector: r.collector, changesSince: describeChanges(prev, current) };
+      }),
+    };
+  }
+
+  setHidden(admissionId: string, hidden: boolean) {
+    const res = this.db.prepare('UPDATE admissions SET hidden = ? WHERE id = ?').run(hidden ? 1 : 0, admissionId);
+    if (res.changes === 0) throw new NotFoundException();
+    this.cache = null;
+    return { id: admissionId, hidden };
+  }
+
+  /** 지정한 이력 시점의 값으로 되돌린다. 지금 값은 새 이력으로 남긴다. */
+  revert(admissionId: string, revisionId: number) {
+    const row = this.db.prepare('SELECT * FROM admissions WHERE id = ?').get(admissionId) as Row | undefined;
+    const rev = this.db.prepare('SELECT data FROM revisions WHERE id = ? AND admission_id = ?').get(revisionId, admissionId) as
+      | { data: string }
+      | undefined;
+    if (!row || !rev) throw new NotFoundException();
+    const at = new Date().toISOString();
+    const w = JSON.parse(rev.data) as WorkingAdmission;
+    const missing = missingForPublish(w);
+    this.database.transaction(() => {
+      this.db.prepare('INSERT INTO revisions (admission_id, data, at, run_id, collector) VALUES (?, ?, ?, ?, ?)').run(
+        admissionId, row.data, at, null, 'admin:revert',
+      );
+      this.db
+        .prepare('UPDATE admissions SET data = ?, published = ?, missing = ?, updated_at = ? WHERE id = ?')
+        .run(rev.data, missing.length ? 0 : 1, JSON.stringify(missing), at, admissionId);
+    });
+    this.cache = null;
+    return this.adminDetail(admissionId);
+  }
+
+  ingestLog(filter: { runId?: string; outcome?: IngestOutcome; limit?: number; offset?: number }) {
+    const where: string[] = [];
+    const params: string[] = [];
+    if (filter.runId) {
+      where.push('run_id = ?');
+      params.push(filter.runId);
+    }
+    if (filter.outcome) {
+      where.push('outcome = ?');
+      params.push(filter.outcome);
+    }
+    const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM ingest_log ${clause}`).get(...params) as { n: number }).n;
+    const limit = Math.min(filter.limit ?? 100, 1000);
+    const rows = this.db
+      .prepare(`SELECT * FROM ingest_log ${clause} ORDER BY at DESC, rowid DESC LIMIT ${limit} OFFSET ${filter.offset ?? 0}`)
+      .all(...params) as unknown as {
+      id: string; run_id: string; collector: string; at: string; key: string; admission_id: string | null; outcome: IngestOutcome; messages: string;
+    }[];
+    return {
+      total,
+      items: rows.map((r) => ({
+        id: r.id, runId: r.run_id, collector: r.collector, at: r.at, key: r.key, admissionId: r.admission_id,
+        outcome: r.outcome, messages: JSON.parse(r.messages) as string[],
+      })),
+    };
+  }
+
+  /** 최근 수집 실행 목록 */
+  ingestRuns(limit = 30) {
+    return this.db
+      .prepare(
+        `SELECT run_id AS runId, collector, MIN(at) AS at,
+                SUM(outcome = 'created') AS created, SUM(outcome = 'updated') AS updated,
+                SUM(outcome = 'unchanged') AS unchanged, SUM(outcome = 'pending') AS pending,
+                SUM(outcome = 'rejected') AS rejected, SUM(outcome = 'retired') AS retired
+         FROM ingest_log GROUP BY run_id ORDER BY at DESC LIMIT ?`,
+      )
+      .all(limit);
+  }
 }

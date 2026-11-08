@@ -10,8 +10,8 @@ export interface AdmissionSchedule {
   first: DateString | null;
   /** 면접·논술 등 대학별고사 [시작, 종료] */
   exam: [DateString, DateString] | null;
-  /** 최초합격자 발표 */
-  final: DateString;
+  /** 최초합격자 발표 (아직 모집요강에서 확인하지 못했으면 null) */
+  final: DateString | null;
   /** 최초합격자 등록 기간. 생략 시 공통 일정 사용 */
   register?: [DateString, DateString] | null;
   /** 충원합격 통보 마감. 생략 시 공통 일정 사용 */
@@ -23,9 +23,9 @@ export interface AdmissionSchedule {
 export interface HistoryYear {
   /** 학년도 (예: 2026) */
   year: number;
-  /** 모집인원 */
-  quota: number;
-  /** 충원인원 (추가합격 인원) */
+  /** 그 해 모집인원 (대학이 공개하지 않았으면 null) */
+  quota: number | null;
+  /** 충원인원 (추가합격 인원 또는 충원합격 마지막 순위) */
   filled: number;
 }
 
@@ -35,16 +35,76 @@ export interface Admission {
   track: string;
   category: Category;
   dept: string;
-  /** 올해 모집인원 */
-  quota: number;
+  /** 올해 모집인원 (아직 확인하지 못했으면 null) */
+  quota: number | null;
   schedule: AdmissionSchedule;
   /** 최근 연도부터 최대 3개년 */
   history: HistoryYear[];
-  /** true면 화면 예시용 가상 데이터 */
-  sample: boolean;
+  /** 각 값의 근거가 된 대학 공식 자료 */
+  sources: Source[];
+  /** 마지막으로 검수·반영된 시각 (ISO) */
+  updatedAt: string;
 }
 
-export type AdmissionInput = Omit<Admission, 'id' | 'sample'>;
+/** 출처: 대학이 직접 게시한 모집요강·입시결과 등 */
+export interface Source {
+  label: string;
+  url: string;
+  /** 출처를 확인한 날짜 */
+  checkedAt: DateString;
+}
+
+/** 지원 정보 본문 (식별자·메타 제외) */
+export type AdmissionInput = Omit<Admission, 'id' | 'sources' | 'updatedAt'>;
+
+/**
+ * 수집기가 보내는 변경. 모집요강 수집기는 일정·모집인원만,
+ * 입시결과 수집기는 충원 이력만 채우는 식으로 일부만 담을 수 있다.
+ * (대학, 전형, 모집단위)가 같은 기존 항목에 합쳐진다.
+ */
+export interface AdmissionDraft {
+  univ: string;
+  track: string;
+  dept: string;
+  category?: Category;
+  quota?: number;
+  schedule?: Partial<AdmissionSchedule>;
+  history?: HistoryYear[];
+  sources: Source[];
+}
+
+/** 수집 결과 한 건이 어떻게 처리됐는지 */
+export type IngestOutcome = 'created' | 'updated' | 'unchanged' | 'pending' | 'rejected' | 'retired';
+
+export interface IngestLogEntry {
+  id: string;
+  runId: string;
+  collector: string;
+  at: string;
+  key: string;
+  admissionId: string | null;
+  outcome: IngestOutcome;
+  /** 반영되지 않은 이유 또는 바뀐 항목 요약 */
+  messages: string[];
+}
+
+export interface IngestSummary {
+  runId: string;
+  counts: Record<IngestOutcome, number>;
+  entries: IngestLogEntry[];
+}
+
+export type ReportStatus = 'open' | 'resolved';
+
+/** 이용자 오류 제보 */
+export interface Report {
+  id: string;
+  admissionId: string;
+  message: string;
+  status: ReportStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+}
 
 export interface CommonScheduleItem {
   key: string;
@@ -86,5 +146,38 @@ export interface Outlook {
   /** 예비번호별 확률 곡선 */
   curve: { rank: number; probability: number }[];
   /** 연도별로 그 해 충원인원이었다면 합격했는지 */
-  byYear: { year: number; filled: number; scaledFilled: number; rate: number; passed: boolean }[];
+  byYear: { year: number; filled: number; scaledFilled: number; rate: number | null; passed: boolean }[];
+}
+
+/** 대학별 수집 상태 */
+export type CoverageStatus =
+  | 'ok'
+  | 'partial'
+  | 'error'
+  | 'robots-blocked'
+  | 'restricted'
+  | 'no-official-data'
+  | 'needs-ocr'
+  | 'unconfigured';
+
+export interface CoverageSource {
+  label: string;
+  url: string;
+  ok: boolean;
+  rows: number;
+  /** 모집단위와 숫자는 있었지만 형식이 맞지 않아 버린 줄 수 */
+  unmatched: number;
+  error?: string;
+}
+
+export interface CoverageEntry {
+  univId: string;
+  name: string;
+  region: string;
+  status: CoverageStatus;
+  message: string | null;
+  admissionSite: string | null;
+  sources: CoverageSource[];
+  drafts: number;
+  checkedAt: string;
 }

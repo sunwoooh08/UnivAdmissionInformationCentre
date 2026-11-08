@@ -9,6 +9,8 @@ async function bootstrap() {
   // 리버스 프록시(Next.js rewrites, Nginx 등) 뒤에서 실제 접속 IP를 로그에 남기기 위함
   app.set('trust proxy', process.env.TRUST_PROXY ?? 'loopback');
   app.setGlobalPrefix('api');
+  // 수집기가 한 번에 많은 결과를 보낼 수 있다 (공개 요청은 nginx 에서 1MB로 제한)
+  app.useBodyParser('json', { limit: '10mb' });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   const origin = process.env.WEB_ORIGIN?.split(',').map((s) => s.trim()).filter(Boolean);
   if (origin?.length) app.enableCors({ origin });

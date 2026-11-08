@@ -7,10 +7,11 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w @susi/shared && npm run build -w @susi/api && npm run build -w @susi/web",
+    "build": "npm run build -w @susi/shared && npm run build -w @susi/api && npm run build -w @susi/collector && npm run build -w @susi/web",
     "dev": "npm run build -w @susi/shared && concurrently -n api,web -c blue,green \"npm run dev -w @susi/api\" \"npm run dev -w @susi/web\"",
     "start": "concurrently -n api,web -c blue,green \"npm run start -w @susi/api\" \"npm run start -w @susi/web\"",
-    "test": "npm run build -w @susi/shared && npm run test -w @susi/shared",
+    "test": "npm run build -w @susi/shared && npm run test -w @susi/shared && npm run build -w @susi/collector && npm run test -w @susi/collector",
+    "collect": "npm run collect -w @susi/collector --",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

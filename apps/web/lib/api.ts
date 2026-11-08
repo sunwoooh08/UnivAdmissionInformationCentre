@@ -1,4 +1,4 @@
-import type { Admission, AdmissionInput, Category, CommonSchedule, Outlook } from '@susi/shared';
+import type { Admission, Category, CommonSchedule, Outlook } from '@susi/shared';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -27,11 +27,10 @@ export const api = {
     const qs = p.toString();
     return request<Admission[]>(`/api/admissions${qs ? `?${qs}` : ''}`);
   },
+  stats: () => request<{ universities: number; admissions: number }>('/api/admissions/stats'),
   get: (id: string) => request<Admission>(`/api/admissions/${encodeURIComponent(id)}`),
   outlook: (id: string, rank: number, signal?: AbortSignal) =>
     request<Outlook>(`/api/admissions/${encodeURIComponent(id)}/outlook?rank=${rank}`, { signal }),
-  create: (input: AdmissionInput) => request<Admission>('/api/admissions', { method: 'POST', body: JSON.stringify(input) }),
-  update: (id: string, input: AdmissionInput) =>
-    request<Admission>(`/api/admissions/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) }),
-  remove: (id: string) => request<void>(`/api/admissions/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  report: (admissionId: string, message: string) =>
+    request<{ id: string }>('/api/reports', { method: 'POST', body: JSON.stringify({ admissionId, message }) }),
 };
